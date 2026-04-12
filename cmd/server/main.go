@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"log/slog"
@@ -9,33 +10,33 @@ import (
 	apiv1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
 	"github.com/metal-stack/v"
-	cli "github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v3"
 )
 
 func main() {
 
-	app := &cli.App{
-		Name:    "masterdata server",
-		Usage:   "grpc server for masterdata",
+	app := &cli.Command{
+		Name:    "tenant-apiserver",
+		Usage:   "connectrpc/grpc server for tenant related data",
 		Version: v.V.String(),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "grpc-server-endpoint",
-				Value:   ":9090",
-				Usage:   "gRPC server endpoint",
-				EnvVars: []string{"TENANT_APISERVER_GRPC_SERVER_ENDPOINT"},
+				Name:    "http-server-endpoint",
+				Value:   "localhost:8081",
+				Usage:   "http server endpoint",
+				Sources: cli.EnvVars("TENANT_APISERVER_GRPC_SERVER_ENDPOINT"),
 			},
 			&cli.StringFlag{
 				Name:    "metrics-endpoint",
 				Value:   ":2112",
 				Usage:   "metrics endpoint",
-				EnvVars: []string{"TENANT_APISERVER_METRICS_ENDPOINT"},
+				Sources: cli.EnvVars("TENANT_APISERVER_METRICS_ENDPOINT"),
 			},
 			&cli.StringFlag{
 				Name:    "log-level",
 				Value:   "info",
 				Usage:   "log-level can be one of error|warn|info|debug",
-				EnvVars: []string{"TENANT_APISERVER_LOG_LEVEL"},
+				Sources: cli.EnvVars("TENANT_APISERVER_LOG_LEVEL"),
 			},
 		},
 		Commands: []*cli.Command{
@@ -48,47 +49,47 @@ func main() {
 						Name:    "host",
 						Value:   "localhost",
 						Usage:   "postgres db hostname",
-						EnvVars: []string{"TENANT_APISERVER_PG_HOST"},
+						Sources: cli.EnvVars("TENANT_APISERVER_PG_HOST"),
 					},
 					&cli.StringFlag{
 						Name:    "port",
 						Value:   "5432",
 						Usage:   "postgres db port",
-						EnvVars: []string{"TENANT_APISERVER_PG_PORT"},
+						Sources: cli.EnvVars("TENANT_APISERVER_PG_PORT"),
 					},
 					&cli.StringFlag{
 						Name:    "user",
 						Value:   "masterdata",
 						Usage:   "postgres db user",
-						EnvVars: []string{"TENANT_APISERVER_PG_USER"},
+						Sources: cli.EnvVars("TENANT_APISERVER_PG_USER"),
 					},
 					&cli.StringFlag{
 						Name:    "password",
 						Value:   "password",
 						Usage:   "postgres db password",
-						EnvVars: []string{"TENANT_APISERVER_PG_PASSWORD"},
+						Sources: cli.EnvVars("TENANT_APISERVER_PG_PASSWORD"),
 					},
 					&cli.StringFlag{
 						Name:    "dbname",
 						Value:   "masterdata",
 						Usage:   "postgres db name",
-						EnvVars: []string{"TENANT_APISERVER_PG_DBNAME"},
+						Sources: cli.EnvVars("TENANT_APISERVER_PG_DBNAME"),
 					},
 					&cli.StringFlag{
 						Name:    "sslmode",
 						Value:   "disable",
 						Usage:   "postgres sslmode, possible values: disable|require|verify-ca|verify-full",
-						EnvVars: []string{"TENANT_APISERVER_PG_SSLMODE"},
+						Sources: cli.EnvVars("TENANT_APISERVER_PG_SSLMODE"),
 					},
 				},
-				Action: func(ctx *cli.Context) error {
-					c := getConfig(ctx)
-					host := ctx.String("host")
-					port := ctx.String("port")
-					user := ctx.String("user")
-					password := ctx.String("password")
-					dbname := ctx.String("dbname")
-					sslmode := ctx.String("sslmode")
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					c := getConfig(cmd)
+					host := cmd.String("host")
+					port := cmd.String("port")
+					user := cmd.String("user")
+					password := cmd.String("password")
+					dbname := cmd.String("dbname")
+					sslmode := cmd.String("sslmode")
 
 					ves := []datastore.Entity{
 						&apiv1.Project{},
@@ -117,17 +118,17 @@ func main() {
 		},
 	}
 
-	err := app.Run(os.Args)
+	err := app.Run(context.Background(), os.Args)
 	if err != nil {
 		log.Fatalf("unable to start tenant-apiserver service: %v", err)
 	}
 }
 
-func getConfig(ctx *cli.Context) config {
+func getConfig(cmd *cli.Command) config {
 	opts := &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}
-	switch ctx.String("log-level") {
+	switch cmd.String("log-level") {
 	case "debug":
 		opts.Level = slog.LevelDebug
 	case "error":
@@ -135,8 +136,8 @@ func getConfig(ctx *cli.Context) config {
 	}
 
 	return config{
-		GrpcServerEndpoint: ctx.String("grpc-server-endpoint"),
-		MetricsEndpoint:    ctx.String("metrics-endpoint"),
+		HttpServerEndpoint: cmd.String("http-server-endpoint"),
+		MetricsEndpoint:    cmd.String("metrics-endpoint"),
 		Log:                slog.New(slog.NewJSONHandler(os.Stdout, opts)),
 	}
 }

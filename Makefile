@@ -9,10 +9,10 @@ BUILDDATE := $(shell date --iso-8601=seconds)
 VERSION := $(or ${VERSION},$(shell git describe --tags --exact-match 2> /dev/null || git symbolic-ref -q --short HEAD || git rev-parse --short HEAD))
 
 .PHONY: all
-all: test server client
+all: test server
 
 .PHONY: release
-release: test server client
+release: test server
 
 .PHONY: clean
 clean:
@@ -38,11 +38,6 @@ server:
 								   -X 'github.com/metal-stack/v.BuildDate=$(BUILDDATE)'" \
 						 -o bin/server github.com/metal-stack/tenant-apiserver/cmd/server
 	strip bin/server
-
-.PHONY: client
-client:
-	go build -tags netgo -o bin/client client/main.go
-	strip bin/client
 
 .PHONY: mini-lab-push
 mini-lab-push:

@@ -52,7 +52,6 @@ jobs:
     - name: Build and Test
       run: |
         make test
-        make client
         make server
     
     - name: Set up Docker Buildx

@@ -31,7 +31,7 @@ import (
 )
 
 type config struct {
-	GrpcServerEndpoint     string
+	HttpServerEndpoint     string
 	MetricsEndpoint        string
 	Log                    *slog.Logger
 	ProjectDataStore       datastore.Storage[*apiv1.Project]
@@ -143,14 +143,14 @@ func (s *server) Run() error {
 	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
 
 	server := http.Server{
-		Addr: s.c.GrpcServerEndpoint,
+		Addr: s.c.HttpServerEndpoint,
 		// For gRPC clients, it's convenient to support HTTP/2 without TLS. You can
 		// avoid x/net/http2 by using http.ListenAndServeTLS.
 		Handler:           h2c.NewHandler(mux, &http2.Server{}),
 		ReadHeaderTimeout: 1 * time.Minute,
 	}
 
-	s.c.Log.Info("started grpc server", "at", server.Addr)
+	s.c.Log.Info("started tenant api-server", "at", server.Addr)
 	err = server.ListenAndServe()
 	return err
 }
