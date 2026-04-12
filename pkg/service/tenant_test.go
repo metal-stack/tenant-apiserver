@@ -165,7 +165,7 @@ func TestFindTenant(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := StartPostgres(ctx, ves...)
+	container, db, err := startPostgres(ctx, ves...)
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, db.Close())
@@ -411,7 +411,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := StartPostgres(ctx, ves...)
+	container, db, err := startPostgres(ctx, ves...)
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, db.Close())
@@ -711,7 +711,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := StartPostgres(ctx, ves...)
+	container, db, err := startPostgres(ctx, ves...)
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, db.Close())
@@ -995,7 +995,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := StartPostgres(ctx, ves...)
+	container, db, err := startPostgres(ctx, ves...)
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, db.Close())

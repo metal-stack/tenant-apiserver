@@ -23,7 +23,7 @@ var (
 	pgContainer testcontainers.Container
 )
 
-func StartPostgres(ctx context.Context, ves ...datastore.Entity) (testcontainers.Container, *sqlx.DB, error) {
+func startPostgres(ctx context.Context, ves ...datastore.Entity) (testcontainers.Container, *sqlx.DB, error) {
 	var err error
 	pgContainer, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
@@ -61,7 +61,7 @@ func StartPostgres(ctx context.Context, ves ...datastore.Entity) (testcontainers
 	return pgContainer, db, err
 }
 
-func StartTenantApiserverWithPostgres(t testing.TB, log *slog.Logger) (client.Client, func()) {
+func startTenantApiserverWithPostgres(t testing.TB, log *slog.Logger) (client.Client, func()) {
 	ctx := context.Background()
 
 	postgres, err := postgres.Run(ctx,
@@ -119,6 +119,7 @@ func startTenantApiserverWithDB(t testing.TB, log *slog.Logger, dbcloser func(),
 	server.EnableHTTP2 = true
 	server.StartTLS()
 	closer := func() {
+		dbcloser()
 		server.Close()
 	}
 

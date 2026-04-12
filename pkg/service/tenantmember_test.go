@@ -99,7 +99,7 @@ func TestFindTenantMember(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := StartPostgres(ctx, ves...)
+	container, db, err := startPostgres(ctx, ves...)
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, db.Close())
@@ -348,7 +348,7 @@ func TestUpdateTenantMember(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := StartPostgres(ctx, ves...)
+	container, db, err := startPostgres(ctx, ves...)
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, db.Close())

@@ -18,7 +18,7 @@ import (
 
 func TestCreateGetUpdateDeleteProject(t *testing.T) {
 	ctx := t.Context()
-	client, closer := StartTenantApiserverWithPostgres(t, log)
+	client, closer := startTenantApiserverWithPostgres(t, log)
 	defer closer()
 
 	t1, err := client.Apiv1().Tenant().Create(ctx, &v1.TenantCreateRequest{Tenant: &v1.Tenant{
@@ -69,7 +69,7 @@ func TestFindProject(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := StartPostgres(ctx, ves...)
+	container, db, err := startPostgres(ctx, ves...)
 	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, db.Close())
