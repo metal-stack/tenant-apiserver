@@ -71,7 +71,7 @@ const (
 )
 
 // IsErrorCode a specific postgres specific error as defined by
-// https://www.postgresql.org/docs/12/errcodes-appendix.html
+// https://www.postgresql.org/docs/18/errcodes-appendix.html
 func IsErrorCode(err error, errcode pqerror.Code) bool {
 	if pgerr, ok := errors.AsType[*pq.Error](err); ok {
 		return pgerr.Code == errcode
