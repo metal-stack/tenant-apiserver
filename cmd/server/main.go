@@ -115,6 +115,26 @@ func main() {
 					return s.Run()
 				},
 			},
+			{
+				Name:    "memory",
+				Aliases: []string{"mem"},
+				Usage:   "start with memory backend",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					c := getConfig(cmd)
+
+					ps := datastore.NewMemory(c.Log, &apiv1.Project{})
+					pms := datastore.NewMemory(c.Log, &apiv1.ProjectMember{})
+					ts := datastore.NewMemory(c.Log, &apiv1.Tenant{})
+					tms := datastore.NewMemory(c.Log, &apiv1.TenantMember{})
+
+					c.ProjectDataStore = ps
+					c.ProjectMemberDataStore = pms
+					c.TenantDataStore = ts
+					c.TenantMemberDataStore = tms
+					s := newServer(c)
+					return s.Run()
+				},
+			},
 		},
 	}
 

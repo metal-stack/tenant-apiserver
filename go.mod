@@ -5,7 +5,7 @@ go 1.26.2
 replace github.com/metal-stack/tenant-api => ../tenant-api
 
 require (
-	connectrpc.com/connect v1.19.1
+	connectrpc.com/connect v1.19.2
 	connectrpc.com/grpchealth v1.4.0
 	connectrpc.com/grpcreflect v1.3.0
 	connectrpc.com/otelconnect v0.9.0
@@ -13,10 +13,9 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/klauspost/connect-compress/v2 v2.1.1
 	github.com/lib/pq v1.12.3
 	github.com/lopezator/migrator v0.3.1
-	github.com/metal-stack/metal-lib v0.24.1
+	github.com/metal-stack/metal-lib v0.25.0
 	github.com/metal-stack/tenant-api v0.0.0-00010101000000-000000000000
 	github.com/metal-stack/v v1.0.3
 	github.com/prometheus/client_golang v1.23.2
@@ -46,7 +45,7 @@ require (
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/go-connections v0.6.0 // indirect
+	github.com/docker/go-connections v0.7.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -58,15 +57,16 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/klauspost/compress v1.18.5 // indirect
+	github.com/klauspost/connect-compress/v2 v2.1.1 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20260330125221-c963978e514e // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
-	github.com/minio/minlz v1.1.0 // indirect
+	github.com/minio/minlz v1.1.1 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.2.0 // indirect
-	github.com/moby/moby/api v1.54.1 // indirect
-	github.com/moby/moby/client v0.4.0 // indirect
+	github.com/moby/moby/api v1.54.2 // indirect
+	github.com/moby/moby/client v0.4.1 // indirect
 	github.com/moby/patternmatcher v0.6.1 // indirect
 	github.com/moby/sys/sequential v0.6.0 // indirect
 	github.com/moby/sys/user v0.4.0 // indirect
@@ -98,7 +98,7 @@ require (
 	golang.org/x/crypto v0.50.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260420184626-e10c466a9529 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
