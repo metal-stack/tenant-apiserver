@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
 
 	// import for sqlx to use postgres driver
 	_ "github.com/lib/pq"
@@ -22,31 +23,8 @@ import (
 // exchangeable for testing
 var Now = time.Now
 
-// Storage is a interface to store objects.
-type Storage[E Entity] interface {
-	// generic
-	Create(ctx context.Context, ve E) error
-	Update(ctx context.Context, ve E) error
-	Delete(ctx context.Context, id string) error
-	DeleteAll(ctx context.Context, ids ...string) error
-	Get(ctx context.Context, id string) (E, error)
-	GetHistory(ctx context.Context, id string, at time.Time, ve E) error
-	GetHistoryCreated(ctx context.Context, id string, ve E) error
-	Find(ctx context.Context, paging *v1.Paging, filters ...any) ([]E, *uint64, error)
-}
-
-// Entity defines a database entity which is stored in jsonb format and with version information
-type Entity interface {
-	JSONField() string
-	TableName() string
-	Schema() string
-	GetMeta() *v1.Meta
-	Kind() string
-	APIVersion() string
-}
-
 // datastore is the adapter to talk to the database
-type datastore[E Entity] struct {
+type datastore[E api.Entity] struct {
 	log              *slog.Logger
 	db               *sqlx.DB
 	sb               squirrel.StatementBuilderType
@@ -63,7 +41,7 @@ const (
 	opDelete Op = "D"
 )
 
-func InitTables(logger *slog.Logger, db *sqlx.DB, ves ...Entity) error {
+func InitTables(logger *slog.Logger, db *sqlx.DB, ves ...api.Entity) error {
 	for _, ve := range ves {
 		jsonField := ve.JSONField()
 		logger.Info("creating schema", "entity", jsonField)
@@ -77,7 +55,7 @@ func InitTables(logger *slog.Logger, db *sqlx.DB, ves ...Entity) error {
 }
 
 // NewPostgresStorage creates a new Storage which uses postgres.
-func NewPostgresDB(logger *slog.Logger, host, port, user, password, dbname, sslmode string, ves ...Entity) (*sqlx.DB, error) {
+func NewPostgresDB(logger *slog.Logger, host, port, user, password, dbname, sslmode string, ves ...api.Entity) (*sqlx.DB, error) {
 	db, err := sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", host, port, user, dbname, password, sslmode))
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to database: %w", err)
@@ -90,7 +68,7 @@ func NewPostgresDB(logger *slog.Logger, host, port, user, password, dbname, sslm
 }
 
 // New creates a new Storage which uses the given database abstraction.
-func New[E Entity](logger *slog.Logger, db *sqlx.DB, e E) Storage[E] {
+func New[E api.Entity](logger *slog.Logger, db *sqlx.DB, e E) api.Storage[E] {
 	ds := &datastore[E]{
 		log:              logger,
 		db:               db,

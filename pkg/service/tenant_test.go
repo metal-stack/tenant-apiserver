@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/runtime/protoimpl"
 
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
 )
 
@@ -158,7 +159,7 @@ func TestMain(m *testing.M) {
 
 func TestFindTenant(t *testing.T) {
 	ctx := t.Context()
-	ves := []datastore.Entity{
+	ves := []api.Entity{
 		&v1.Project{},
 		&v1.ProjectMember{},
 		&v1.Tenant{},
@@ -404,7 +405,7 @@ func TestFindTenant(t *testing.T) {
 
 func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 	ctx := context.Background()
-	ves := []datastore.Entity{
+	ves := []api.Entity{
 		&v1.Project{},
 		&v1.ProjectMember{},
 		&v1.Tenant{},
@@ -704,7 +705,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 
 func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 	ctx := context.Background()
-	ves := []datastore.Entity{
+	ves := []api.Entity{
 		&v1.Project{},
 		&v1.ProjectMember{},
 		&v1.Tenant{},
@@ -988,7 +989,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 
 func Test_tenantService_ListTenantMembers(t *testing.T) {
 	ctx := context.Background()
-	ves := []datastore.Entity{
+	ves := []api.Entity{
 		&v1.Project{},
 		&v1.ProjectMember{},
 		&v1.Tenant{},

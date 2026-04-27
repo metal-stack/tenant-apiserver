@@ -12,7 +12,7 @@ import (
 	apiv1 "github.com/metal-stack/tenant-api/go/api/v1"
 
 	apiv1connect "github.com/metal-stack/tenant-api/go/api/v1/apiv1connect"
-	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/service"
 
 	"github.com/metal-stack/v"
@@ -34,19 +34,19 @@ type config struct {
 	HttpServerEndpoint     string
 	MetricsEndpoint        string
 	Log                    *slog.Logger
-	ProjectDataStore       datastore.Storage[*apiv1.Project]
-	ProjectMemberDataStore datastore.Storage[*apiv1.ProjectMember]
-	TenantDataStore        datastore.Storage[*apiv1.Tenant]
-	TenantMemberDataStore  datastore.Storage[*apiv1.TenantMember]
+	ProjectDataStore       api.Storage[*apiv1.Project]
+	ProjectMemberDataStore api.Storage[*apiv1.ProjectMember]
+	TenantDataStore        api.Storage[*apiv1.Tenant]
+	TenantMemberDataStore  api.Storage[*apiv1.TenantMember]
 	DB                     *sqlx.DB
 }
 type server struct {
 	c config
 
-	projectDataStore       datastore.Storage[*apiv1.Project]
-	projectMemberDataStore datastore.Storage[*apiv1.ProjectMember]
-	tenantDataStore        datastore.Storage[*apiv1.Tenant]
-	tenantMemberDataStore  datastore.Storage[*apiv1.TenantMember]
+	projectDataStore       api.Storage[*apiv1.Project]
+	projectMemberDataStore api.Storage[*apiv1.ProjectMember]
+	tenantDataStore        api.Storage[*apiv1.Tenant]
+	tenantMemberDataStore  api.Storage[*apiv1.TenantMember]
 }
 
 func newServer(c config) *server {

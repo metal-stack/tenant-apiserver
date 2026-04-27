@@ -1,4 +1,4 @@
-package datastore
+package memory
 
 import (
 	"context"
@@ -8,16 +8,18 @@ import (
 	"time"
 
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
+	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
 )
 
-type memoryDatastore[E Entity] struct {
+type memoryDatastore[E api.Entity] struct {
 	lock     sync.RWMutex
 	entities map[string]E
 	entity   string
 	log      *slog.Logger
 }
 
-func NewMemory[E Entity](log *slog.Logger, e E) Storage[E] {
+func NewMemory[E api.Entity](log *slog.Logger, e E) api.Storage[E] {
 	entity := e.JSONField()
 	return &memoryDatastore[E]{
 		lock:     sync.RWMutex{},
@@ -41,7 +43,7 @@ func (m *memoryDatastore[E]) Create(ctx context.Context, ve E) error {
 
 	_, ok := m.entities[id]
 	if ok {
-		return NewDuplicateKeyError(fmt.Sprintf("an entity of type:%s with the id:%s already exists", m.entity, id))
+		return errorutil.Conflict("an entity of type:%s with the id:%s already exists", m.entity, id)
 	}
 	m.entities[id] = ve
 	return nil
@@ -56,7 +58,7 @@ func (m *memoryDatastore[E]) Delete(ctx context.Context, id string) error {
 
 	_, ok := m.entities[id]
 	if !ok {
-		return NewNotFoundError(fmt.Sprintf("delete of %s with id %s", m.entity, id))
+		return errorutil.NotFound("delete of %s with id %s", m.entity, id)
 	}
 	delete(m.entities, id)
 
@@ -94,7 +96,7 @@ func (m *memoryDatastore[E]) Get(ctx context.Context, id string) (E, error) {
 
 	e, ok := m.entities[id]
 	if !ok {
-		return zero, NewNotFoundError(fmt.Sprintf("get of %s with id %s", m.entity, id))
+		return zero, errorutil.NotFound("get of %s with id %s", m.entity, id)
 	}
 
 	return e, nil
@@ -123,7 +125,7 @@ func (m *memoryDatastore[E]) Update(ctx context.Context, ve E) error {
 
 	_, ok := m.entities[id]
 	if !ok {
-		return NewNotFoundError(fmt.Sprintf("update of %s with id %s", m.entity, id))
+		return errorutil.NotFound("update of %s with id %s", m.entity, id)
 	}
 
 	m.entities[id] = ve

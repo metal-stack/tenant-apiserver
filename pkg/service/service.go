@@ -6,6 +6,7 @@ import (
 	"time"
 
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
 
 	"google.golang.org/grpc/codes"
@@ -13,17 +14,17 @@ import (
 )
 
 type (
-	ProjectDataStore       datastore.Storage[*v1.Project]
-	ProjectMemberDataStore datastore.Storage[*v1.ProjectMember]
-	TenantDataStore        datastore.Storage[*v1.Tenant]
-	TenantMemberDataStore  datastore.Storage[*v1.TenantMember]
+	ProjectDataStore       api.Storage[*v1.Project]
+	ProjectMemberDataStore api.Storage[*v1.ProjectMember]
+	TenantDataStore        api.Storage[*v1.Tenant]
+	TenantMemberDataStore  api.Storage[*v1.TenantMember]
 )
 
-type StorageStatusWrapper[E datastore.Entity] struct {
-	storage datastore.Storage[E]
+type StorageStatusWrapper[E api.Entity] struct {
+	storage api.Storage[E]
 }
 
-func NewStorageStatusWrapper[E datastore.Entity](s datastore.Storage[E]) datastore.Storage[E] {
+func NewStorageStatusWrapper[E api.Entity](s api.Storage[E]) api.Storage[E] {
 	return StorageStatusWrapper[E]{
 		storage: s,
 	}

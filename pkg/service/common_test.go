@@ -12,6 +12,7 @@ import (
 	apiv1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-api/go/api/v1/apiv1connect"
 	"github.com/metal-stack/tenant-api/go/client"
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
@@ -23,7 +24,7 @@ var (
 	pgContainer testcontainers.Container
 )
 
-func startPostgres(ctx context.Context, ves ...datastore.Entity) (testcontainers.Container, *sqlx.DB, error) {
+func startPostgres(ctx context.Context, ves ...api.Entity) (testcontainers.Container, *sqlx.DB, error) {
 	var err error
 	pgContainer, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{

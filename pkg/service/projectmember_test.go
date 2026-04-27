@@ -14,6 +14,7 @@ import (
 
 	"testing"
 
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
 )
 
@@ -102,7 +103,7 @@ import (
 
 func TestFindProjectMember(t *testing.T) {
 	ctx := t.Context()
-	ves := []datastore.Entity{
+	ves := []api.Entity{
 		&v1.Project{},
 		&v1.ProjectMember{},
 		&v1.Tenant{},
@@ -371,7 +372,7 @@ func TestFindProjectMember(t *testing.T) {
 
 func TestUpdateProjectMember(t *testing.T) {
 	ctx := t.Context()
-	ves := []datastore.Entity{
+	ves := []api.Entity{
 		&v1.Project{},
 		&v1.ProjectMember{},
 		&v1.Tenant{},

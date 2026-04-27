@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -811,7 +812,7 @@ func createPostgresConnection() (testcontainers.Container, *sqlx.DB, error) {
 	var db *sqlx.DB
 	for {
 		var err error
-		ves := []Entity{
+		ves := []api.Entity{
 			&v1.Project{},
 			&v1.Tenant{},
 		}

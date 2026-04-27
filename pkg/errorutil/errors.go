@@ -1,42 +1,75 @@
 package errorutil
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"errors"
+	"fmt"
+	"strings"
+
+	"connectrpc.com/connect"
 )
 
-// CheckErrorCode returns true, if the given err is not nil,
-// is of type grpc Status and the code equals the given code.
-func CheckErrorCode(err error, code codes.Code) bool {
-	if err == nil {
-		return false
+// Convert compares the error and maps it to a appropriate connect.Error
+// if there is no backend-specific wrapped error given to this function, it will just return an internal error.
+// if there are multiple errors wrapped this function only cares about the first found error in the error tree.
+func Convert(err error) *connect.Error {
+	// Ipam or other connect errors
+	if connectErr, ok := errors.AsType[*connect.Error](err); ok {
+		// when the connect error is wrapped deeper a tree, connect.Error() calls the string function on
+		// the error and adds things like "internal: ..."
+		// so we replace the wrapped error message with the direct message
+		cleaned := strings.Replace(err.Error(), connectErr.Error(), connectErr.Message(), 1)
+		return connect.NewError(connectErr.Code(), errors.New(cleaned))
 	}
-	st, ok := status.FromError(err)
-	if !ok {
-		return false
-	}
-	return st.Code() == code
+
+	return connect.NewError(connect.CodeInternal, err)
 }
 
-// IsNotFound checks if the given error is a notfound error.
 func IsNotFound(err error) bool {
-	return CheckErrorCode(err, codes.NotFound)
+	connectErr := Convert(err)
+	return connectErr.Code() == connect.CodeNotFound
 }
 
-// IsConflict checks if the given error is a conflict error.
-// Example: key already exists on create.
 func IsConflict(err error) bool {
-	return CheckErrorCode(err, codes.AlreadyExists)
+	connectErr := Convert(err)
+	return connectErr.Code() == connect.CodeAlreadyExists
 }
 
-// IsInternal checks if the given error is an internal server error.
 func IsInternal(err error) bool {
-	return CheckErrorCode(err, codes.Internal)
+	connectErr := Convert(err)
+	return connectErr.Code() == connect.CodeInternal
 }
 
-// IsOptimistickLockError checks if the given error is a Optimistic Lock Error,
-// which indicates that you read an entity and tried to update this entity,
-// but it changed in the datastore by another party in the meantime.
-func IsOptimistickLockError(err error) bool {
-	return CheckErrorCode(err, codes.FailedPrecondition)
+func IsInvalidArgument(err error) bool {
+	connectErr := Convert(err)
+	return connectErr.Code() == connect.CodeInvalidArgument
+}
+
+func IsFailedPrecondition(err error) bool {
+	connectErr := Convert(err)
+	return connectErr.Code() == connect.CodeFailedPrecondition
+}
+
+// NotFound creates a new notfound error with a given error message.
+func NotFound(format string, args ...any) error {
+	return connect.NewError(connect.CodeNotFound, fmt.Errorf(format, args...))
+}
+
+// Conflict creates a new conflict error with a given error message.
+func Conflict(format string, args ...any) error {
+	return connect.NewError(connect.CodeAlreadyExists, fmt.Errorf(format, args...))
+}
+
+// Internal creates a new Internal error with a given error message and the original error.
+func Internal(format string, args ...any) error {
+	return connect.NewError(connect.CodeInternal, fmt.Errorf(format, args...))
+}
+
+// InvalidArgument creates a new InvalidArgument error with a given error message and the original error.
+func InvalidArgument(format string, args ...any) error {
+	return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf(format, args...))
+}
+
+// FailedPrecondition creates a new FailedPrecondition error with a given error message and the original error.
+func FailedPrecondition(format string, args ...any) error {
+	return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf(format, args...))
 }

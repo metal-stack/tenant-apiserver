@@ -11,21 +11,22 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
 )
 
 type tenantService struct {
 	log               *slog.Logger
-	tenantStore       datastore.Storage[*v1.Tenant]
-	tenantMemberStore datastore.Storage[*v1.TenantMember]
+	tenantStore       api.Storage[*v1.Tenant]
+	tenantMemberStore api.Storage[*v1.TenantMember]
 	db                *sqlx.DB
 }
 
 var (
-	projectMembers = datastore.Entity(&v1.ProjectMember{})
-	tenantMembers  = datastore.Entity(&v1.TenantMember{})
-	projects       = datastore.Entity(&v1.Project{})
-	tenants        = datastore.Entity(&v1.Tenant{})
+	projectMembers = api.Entity(&v1.ProjectMember{})
+	tenantMembers  = api.Entity(&v1.TenantMember{})
+	projects       = api.Entity(&v1.Project{})
+	tenants        = api.Entity(&v1.Tenant{})
 )
 
 func NewTenantService(db *sqlx.DB, l *slog.Logger, tds TenantDataStore, tmds TenantMemberDataStore) *tenantService {

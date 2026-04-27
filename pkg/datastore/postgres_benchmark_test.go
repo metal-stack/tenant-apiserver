@@ -7,12 +7,13 @@ import (
 
 	"github.com/google/uuid"
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var (
-	ds Storage[*v1.Tenant]
+	ds api.Storage[*v1.Tenant]
 )
 
 func init() {

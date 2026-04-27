@@ -6,15 +6,15 @@ import (
 	"log/slog"
 
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
-	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type tenantMemberService struct {
-	tenantMemberStore datastore.Storage[*v1.TenantMember]
-	tenantStore       datastore.Storage[*v1.Tenant]
+	tenantMemberStore api.Storage[*v1.TenantMember]
+	tenantStore       api.Storage[*v1.Tenant]
 	log               *slog.Logger
 }
 

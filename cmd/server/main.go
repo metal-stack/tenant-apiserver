@@ -8,7 +8,9 @@ import (
 	"os"
 
 	apiv1 "github.com/metal-stack/tenant-api/go/api/v1"
+	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
+	"github.com/metal-stack/tenant-apiserver/pkg/datastore/memory"
 	"github.com/metal-stack/v"
 	cli "github.com/urfave/cli/v3"
 )
@@ -91,7 +93,7 @@ func main() {
 					dbname := cmd.String("dbname")
 					sslmode := cmd.String("sslmode")
 
-					ves := []datastore.Entity{
+					ves := []api.Entity{
 						&apiv1.Project{},
 						&apiv1.ProjectMember{},
 						&apiv1.Tenant{},
@@ -122,10 +124,10 @@ func main() {
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					c := getConfig(cmd)
 
-					ps := datastore.NewMemory(c.Log, &apiv1.Project{})
-					pms := datastore.NewMemory(c.Log, &apiv1.ProjectMember{})
-					ts := datastore.NewMemory(c.Log, &apiv1.Tenant{})
-					tms := datastore.NewMemory(c.Log, &apiv1.TenantMember{})
+					ps := memory.NewMemory(c.Log, &apiv1.Project{})
+					pms := memory.NewMemory(c.Log, &apiv1.ProjectMember{})
+					ts := memory.NewMemory(c.Log, &apiv1.Tenant{})
+					tms := memory.NewMemory(c.Log, &apiv1.TenantMember{})
 
 					c.ProjectDataStore = ps
 					c.ProjectMemberDataStore = pms
