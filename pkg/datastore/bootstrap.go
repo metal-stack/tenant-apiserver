@@ -14,6 +14,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
+	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 	"github.com/metal-stack/tenant-apiserver/pkg/health"
 	healthv1 "google.golang.org/grpc/health/grpc_health_v1"
 	"sigs.k8s.io/yaml"
@@ -32,13 +33,13 @@ func Initdb(log *slog.Logger, db *sqlx.DB, healthServer *health.Server, dir stri
 		return err
 	}
 
-	ts := New(log, db, &v1.Tenant{})
+	ts := postgres.New(log, db, &v1.Tenant{})
 	tbs := &bootstrap[*v1.Tenant]{
 		log: log,
 		ds:  ts,
 	}
 
-	ps := New(log, db, &v1.Project{})
+	ps := postgres.New(log, db, &v1.Project{})
 	pbs := &bootstrap[*v1.Project]{
 		log: log,
 		ds:  ps,
@@ -144,7 +145,7 @@ func (bs *bootstrap[E]) createOrUpdate(ctx context.Context, ydoc []byte) error {
 	exists := true
 	existingEntity, err := bs.ds.Get(ctx, mm.GetId())
 	if err != nil {
-		if errors.As(err, &NotFoundError{}) {
+		if errors.As(err, &postgres.NotFoundError{}) {
 			exists = false
 		} else {
 			bs.log.Error("initdb", "error", err)

@@ -7,7 +7,7 @@ import (
 
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
-	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
+	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -65,7 +65,7 @@ func (s StorageStatusWrapper[E]) Find(ctx context.Context, paging *v1.Paging, fi
 
 // wrapCreateStatusError wraps some errors in a grpc status error
 func wrapCreateStatusError(err error) error {
-	if errors.As(err, &datastore.DuplicateKeyError{}) {
+	if errors.As(err, &postgres.DuplicateKeyError{}) {
 		err = status.Error(codes.AlreadyExists, err.Error())
 	}
 	return err
@@ -73,9 +73,9 @@ func wrapCreateStatusError(err error) error {
 
 // wrapDeleteStatusError wraps some errors in a grpc status error
 func wrapDeleteStatusError(err error) error {
-	if errors.As(err, &datastore.NotFoundError{}) {
+	if errors.As(err, &postgres.NotFoundError{}) {
 		err = status.Error(codes.NotFound, err.Error())
-	} else if errors.As(err, &datastore.DataCorruptionError{}) {
+	} else if errors.As(err, &postgres.DataCorruptionError{}) {
 		err = status.Error(codes.Internal, err.Error())
 	}
 
@@ -84,7 +84,7 @@ func wrapDeleteStatusError(err error) error {
 
 // wrapGetStatusError wraps some errors in a grpc status error
 func wrapGetStatusError(err error) error {
-	if errors.As(err, &datastore.NotFoundError{}) {
+	if errors.As(err, &postgres.NotFoundError{}) {
 		err = status.Error(codes.NotFound, err.Error())
 	}
 	return err
@@ -92,7 +92,7 @@ func wrapGetStatusError(err error) error {
 
 // wrapUpdateStatusError wraps some errors in a grpc status error
 func wrapUpdateStatusError(err error) error {
-	if errors.As(err, &datastore.OptimisticLockError{}) {
+	if errors.As(err, &postgres.OptimisticLockError{}) {
 		err = status.Error(codes.FailedPrecondition, err.Error())
 	}
 	return err

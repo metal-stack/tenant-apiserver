@@ -12,7 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
-	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
+	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 )
 
 type tenantService struct {
@@ -229,7 +229,7 @@ func (s *tenantService) FindParticipatingProjects(ctx context.Context, req *v1.F
 		}
 	)
 
-	err := datastore.RunQuery(ctx, s.log, s.db, queryDirectProjectParticipations, input, resultFn)
+	err := postgres.RunQuery(ctx, s.log, s.db, queryDirectProjectParticipations, input, resultFn)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +240,7 @@ func (s *tenantService) FindParticipatingProjects(ctx context.Context, req *v1.F
 	}
 
 	if includeInherited {
-		err := datastore.RunQuery(ctx, s.log, s.db, queryInheritedProjectParticipations, input, resultFn)
+		err := postgres.RunQuery(ctx, s.log, s.db, queryInheritedProjectParticipations, input, resultFn)
 		if err != nil {
 			return nil, err
 		}
@@ -320,7 +320,7 @@ func (s *tenantService) FindParticipatingTenants(ctx context.Context, req *v1.Fi
 		}
 	)
 
-	err := datastore.RunQuery(ctx, s.log, s.db, queryDirectTenantParticipations, input, resultFn)
+	err := postgres.RunQuery(ctx, s.log, s.db, queryDirectTenantParticipations, input, resultFn)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +331,7 @@ func (s *tenantService) FindParticipatingTenants(ctx context.Context, req *v1.Fi
 	}
 
 	if includeInherited {
-		err = datastore.RunQuery(ctx, s.log, s.db, queryInheritedTenantParticipations, input, resultFn)
+		err = postgres.RunQuery(ctx, s.log, s.db, queryInheritedTenantParticipations, input, resultFn)
 		if err != nil {
 			return nil, err
 		}
@@ -408,7 +408,7 @@ func (s *tenantService) ListTenantMembers(ctx context.Context, req *v1.ListTenan
 		}
 	)
 
-	err := datastore.RunQuery(ctx, s.log, s.db, queryDirectTenantMembers, input, resultFn)
+	err := postgres.RunQuery(ctx, s.log, s.db, queryDirectTenantMembers, input, resultFn)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +419,7 @@ func (s *tenantService) ListTenantMembers(ctx context.Context, req *v1.ListTenan
 	}
 
 	if includeInherited {
-		err = datastore.RunQuery(ctx, s.log, s.db, queryInheritedTenantMembers, input, resultFn)
+		err = postgres.RunQuery(ctx, s.log, s.db, queryInheritedTenantMembers, input, resultFn)
 		if err != nil {
 			return nil, err
 		}

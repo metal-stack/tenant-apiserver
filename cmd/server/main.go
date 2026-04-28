@@ -9,8 +9,8 @@ import (
 
 	apiv1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
-	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/memory"
+	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 	"github.com/metal-stack/v"
 	cli "github.com/urfave/cli/v3"
 )
@@ -100,14 +100,14 @@ func main() {
 						&apiv1.TenantMember{},
 					}
 
-					db, err := datastore.NewPostgresDB(c.Log, host, port, user, password, dbname, sslmode, ves...)
+					db, err := postgres.NewPostgresDB(c.Log, host, port, user, password, dbname, sslmode, ves...)
 					if err != nil {
 						return fmt.Errorf("failed to create postgres connection: %w", err)
 					}
-					ps := datastore.New(c.Log, db, &apiv1.Project{})
-					pms := datastore.New(c.Log, db, &apiv1.ProjectMember{})
-					ts := datastore.New(c.Log, db, &apiv1.Tenant{})
-					tms := datastore.New(c.Log, db, &apiv1.TenantMember{})
+					ps := postgres.New(c.Log, db, &apiv1.Project{})
+					pms := postgres.New(c.Log, db, &apiv1.ProjectMember{})
+					ts := postgres.New(c.Log, db, &apiv1.Tenant{})
+					tms := postgres.New(c.Log, db, &apiv1.TenantMember{})
 					c.ProjectDataStore = ps
 					c.ProjectMemberDataStore = pms
 					c.TenantDataStore = ts

@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
-	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
+	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 )
 
 func TestCreateGetUpdateDeleteProject(t *testing.T) {
@@ -78,7 +78,7 @@ func TestFindProject(t *testing.T) {
 	}()
 
 	var (
-		projectStore = datastore.New(log, db, &v1.Project{})
+		projectStore = postgres.New(log, db, &v1.Project{})
 		testProject1 = &v1.Project{
 			Meta: &v1.Meta{
 				Id:         "1",

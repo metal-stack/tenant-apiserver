@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/runtime/protoimpl"
 
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
-	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
+	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 )
 
 var log *slog.Logger
@@ -174,7 +174,7 @@ func TestFindTenant(t *testing.T) {
 	}()
 
 	var (
-		tenantStore = datastore.New(log, db, &v1.Tenant{})
+		tenantStore = postgres.New(log, db, &v1.Tenant{})
 		testTenant1 = &v1.Tenant{
 			Meta: &v1.Meta{
 				Id:   "1",
@@ -425,9 +425,9 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 	}
 
 	var (
-		projectStore       = datastore.New(log, db, &v1.Project{})
-		tenantMemberStore  = datastore.New(log, db, &v1.TenantMember{})
-		projectMemberStore = datastore.New(log, db, &v1.ProjectMember{})
+		projectStore       = postgres.New(log, db, &v1.Project{})
+		tenantMemberStore  = postgres.New(log, db, &v1.TenantMember{})
+		projectMemberStore = postgres.New(log, db, &v1.ProjectMember{})
 	)
 
 	tests := []struct {
@@ -725,10 +725,10 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 	}
 
 	var (
-		projectStore       = datastore.New(log, db, &v1.Project{})
-		tenantMemberStore  = datastore.New(log, db, &v1.TenantMember{})
-		projectMemberStore = datastore.New(log, db, &v1.ProjectMember{})
-		tenantStore        = datastore.New(log, db, &v1.Tenant{})
+		projectStore       = postgres.New(log, db, &v1.Project{})
+		tenantMemberStore  = postgres.New(log, db, &v1.TenantMember{})
+		projectMemberStore = postgres.New(log, db, &v1.ProjectMember{})
+		tenantStore        = postgres.New(log, db, &v1.Tenant{})
 	)
 
 	tests := []struct {
@@ -1009,10 +1009,10 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 	}
 
 	var (
-		projectStore       = datastore.New(log, db, &v1.Project{})
-		tenantMemberStore  = datastore.New(log, db, &v1.TenantMember{})
-		projectMemberStore = datastore.New(log, db, &v1.ProjectMember{})
-		tenantStore        = datastore.New(log, db, &v1.Tenant{})
+		projectStore       = postgres.New(log, db, &v1.Project{})
+		tenantMemberStore  = postgres.New(log, db, &v1.TenantMember{})
+		projectMemberStore = postgres.New(log, db, &v1.ProjectMember{})
+		tenantStore        = postgres.New(log, db, &v1.Tenant{})
 	)
 
 	tests := []struct {

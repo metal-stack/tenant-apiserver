@@ -13,10 +13,10 @@ import (
 	"github.com/metal-stack/tenant-api/go/api/v1/apiv1connect"
 	"github.com/metal-stack/tenant-api/go/client"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
-	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
+	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	testpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
@@ -54,7 +54,7 @@ func startPostgres(ctx context.Context, ves ...api.Entity) (testcontainers.Conta
 
 	fmt.Println(port.Port())
 
-	db, err := datastore.NewPostgresDB(log, ip, port.Port(), "postgres", "password", "postgres", "disable", ves...)
+	db, err := postgres.NewPostgresDB(log, ip, port.Port(), "postgres", "password", "postgres", "disable", ves...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -65,10 +65,10 @@ func startPostgres(ctx context.Context, ves ...api.Entity) (testcontainers.Conta
 func startTenantApiserverWithPostgres(t testing.TB, log *slog.Logger) (client.Client, func()) {
 	ctx := context.Background()
 
-	postgres, err := postgres.Run(ctx,
+	postgres, err := testpostgres.Run(ctx,
 		"postgres:18-alpine",
-		postgres.WithPassword("password"),
-		postgres.BasicWaitStrategies(),
+		testpostgres.WithPassword("password"),
+		testpostgres.BasicWaitStrategies(),
 		testcontainers.WithTmpfs(map[string]string{"/var/lib/postgresql": "rw"}),
 		testcontainers.WithName("postgres"),
 	)
@@ -90,12 +90,12 @@ func startTenantApiserverWithPostgres(t testing.TB, log *slog.Logger) (client.Cl
 func startTenantApiserverWithDB(t testing.TB, log *slog.Logger, dbcloser func(), db *sqlx.DB) (client.Client, func()) {
 
 	log = log.WithGroup("tenant-apiserver")
-	ps := datastore.New(log, db, &apiv1.Project{})
-	pms := datastore.New(log, db, &apiv1.ProjectMember{})
-	ts := datastore.New(log, db, &apiv1.Tenant{})
-	tms := datastore.New(log, db, &apiv1.TenantMember{})
+	ps := postgres.New(log, db, &apiv1.Project{})
+	pms := postgres.New(log, db, &apiv1.ProjectMember{})
+	ts := postgres.New(log, db, &apiv1.Tenant{})
+	tms := postgres.New(log, db, &apiv1.TenantMember{})
 
-	err := datastore.InitTables(log, db,
+	err := postgres.InitTables(log, db,
 		&apiv1.Project{},
 		&apiv1.ProjectMember{},
 		&apiv1.Tenant{},

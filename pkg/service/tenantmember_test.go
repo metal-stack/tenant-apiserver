@@ -15,7 +15,7 @@ import (
 	"testing"
 
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
-	"github.com/metal-stack/tenant-apiserver/pkg/datastore"
+	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 )
 
 // func TestCreateTenantMember(t *testing.T) {
@@ -108,8 +108,8 @@ func TestFindTenantMember(t *testing.T) {
 	}()
 
 	var (
-		tenantMemberStore = datastore.New(log, db, &v1.TenantMember{})
-		tenantStore       = datastore.New(log, db, &v1.Tenant{})
+		tenantMemberStore = postgres.New(log, db, &v1.TenantMember{})
+		tenantStore       = postgres.New(log, db, &v1.Tenant{})
 
 		testTenant1 = &v1.Tenant{
 			Meta: &v1.Meta{
@@ -357,8 +357,8 @@ func TestUpdateTenantMember(t *testing.T) {
 	}()
 
 	var (
-		tenantMemberStore = datastore.New(log, db, &v1.TenantMember{})
-		tenantStore       = datastore.New(log, db, &v1.Tenant{})
+		tenantMemberStore = postgres.New(log, db, &v1.TenantMember{})
+		tenantStore       = postgres.New(log, db, &v1.Tenant{})
 
 		service = &tenantMemberService{
 			log:               log,
