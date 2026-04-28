@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/google/go-cmp/cmp"
 )
 
 // Convert compares the error and maps it to a appropriate connect.Error
@@ -72,4 +73,22 @@ func InvalidArgument(format string, args ...any) error {
 // FailedPrecondition creates a new FailedPrecondition error with a given error message and the original error.
 func FailedPrecondition(format string, args ...any) error {
 	return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf(format, args...))
+}
+
+func ConnectErrorComparer() cmp.Option {
+	return cmp.Comparer(func(x, y *connect.Error) bool {
+		if x == nil && y == nil {
+			return true
+		}
+		if x == nil && y != nil {
+			return false
+		}
+		if x != nil && y == nil {
+			return false
+		}
+		if x.Error() != y.Error() {
+			return false
+		}
+		return x.Code() == y.Code()
+	})
 }

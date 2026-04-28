@@ -15,6 +15,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
+	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
 
 	// import for sqlx to use postgres driver
 	_ "github.com/lib/pq"
@@ -85,7 +86,7 @@ func (ds *datastore[E]) Create(ctx context.Context, ve E) error {
 	ds.log.Debug("create", "entity", ds.jsonField, "value", ve)
 	meta := ve.GetMeta()
 	if meta == nil {
-		return fmt.Errorf("create of type:%s failed, meta is nil", ds.jsonField)
+		return errorutil.InvalidArgument("create of type:%s failed, meta is nil", ds.jsonField)
 	}
 	id := meta.GetId()
 	if id == "" {
@@ -96,13 +97,13 @@ func (ds *datastore[E]) Create(ctx context.Context, ve E) error {
 	if kind == "" {
 		meta.Kind = ve.Kind()
 	} else if kind != ve.Kind() {
-		return fmt.Errorf("create of type:%s failed, kind is set to:%s but must be:%s", ds.jsonField, kind, ve.Kind())
+		return errorutil.InvalidArgument("create of type:%s failed, kind is set to:%s but must be:%s", ds.jsonField, kind, ve.Kind())
 	}
 	apiVersion := meta.GetApiversion()
 	if apiVersion == "" {
 		meta.Apiversion = ve.APIVersion()
 	} else if apiVersion != ve.APIVersion() {
-		return fmt.Errorf("create of type:%s failed, apiversion must be set to:%s", ds.jsonField, ve.APIVersion())
+		return errorutil.InvalidArgument("create of type:%s failed, apiversion must be set to:%s", ds.jsonField, ve.APIVersion())
 	}
 
 	createdAtPb, createdAt := pbNow()
@@ -132,7 +133,7 @@ func (ds *datastore[E]) Create(ctx context.Context, ve E) error {
 	err = q.RunWith(tx).QueryRowContext(ctx).Scan(ve)
 	if err != nil {
 		if IsErrorCode(err, UniqueViolationError) {
-			return NewDuplicateKeyError(fmt.Sprintf("an entity of type:%s with the id:%s already exists", ds.jsonField, meta.Id))
+			return errorutil.Conflict("an entity of type:%s with the id:%s already exists", ds.jsonField, meta.Id)
 		}
 		return err
 	}
@@ -148,35 +149,33 @@ func (ds *datastore[E]) Update(ctx context.Context, ve E) error {
 	ds.log.Debug("update", "entity", ds.jsonField)
 	meta := ve.GetMeta()
 	if meta == nil {
-		return fmt.Errorf("update of type:%s failed, meta is nil", ds.jsonField)
+		return errorutil.InvalidArgument("update of type:%s failed, meta is nil", ds.jsonField)
 	}
 	id := meta.GetId()
 	if id == "" {
-		return fmt.Errorf("entity of type:%s has no id, cannot update: %v", ds.jsonField, ve)
+		return errorutil.InvalidArgument("entity of type:%s has no id, cannot update: %v", ds.jsonField, ve)
 	}
 	kind := meta.GetKind()
 	if kind == "" {
 		meta.Kind = ve.Kind()
 	} else if kind != ve.Kind() {
-		return fmt.Errorf("update of type:%s failed, kind is set to:%s but must be:%s", ds.jsonField, kind, ve.Kind())
+		return errorutil.InvalidArgument("update of type:%s failed, kind is set to:%s but must be:%s", ds.jsonField, kind, ve.Kind())
 	}
 	apiVersion := meta.GetApiversion()
 	if apiVersion == "" {
 		meta.Apiversion = ve.APIVersion()
 	} else if apiVersion != ve.APIVersion() {
-		return fmt.Errorf("update of type:%s failed, apiversion must be set to:%s", ds.jsonField, ve.APIVersion())
+		return errorutil.InvalidArgument("update of type:%s failed, apiversion must be set to:%s", ds.jsonField, ve.APIVersion())
 	}
 
 	existingVE, err := ds.Get(ctx, id)
 	if err != nil {
-		return fmt.Errorf("update - no entity of type:%s with id:%s found", ds.jsonField, id)
+		return errorutil.NotFound("update - no entity of type:%s with id:%s found", ds.jsonField, id)
 	}
 
 	if ve.GetMeta().GetVersion() < existingVE.GetMeta().GetVersion() {
-		return NewOptimisticLockError(
-			fmt.Sprintf("optimistic lock error updating %s with id %s, existing version %d mismatches entity version %d",
-				ds.jsonField, id, existingVE.GetMeta().GetVersion(), ve.GetMeta().GetVersion(),
-			),
+		return errorutil.Conflict("optimistic lock error updating %s with id %s, existing version %d mismatches entity version %d",
+			ds.jsonField, id, existingVE.GetMeta().GetVersion(), ve.GetMeta().GetVersion(),
 		)
 	}
 
@@ -243,7 +242,7 @@ func (ds *datastore[E]) Get(ctx context.Context, id string) (E, error) {
 	err := row.Scan(e)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return zero, NewNotFoundError(fmt.Sprintf("%s with id:%s not found %v", ds.jsonField, id, err))
+			return zero, errorutil.NotFound("%s with id:%s not found %v", ds.jsonField, id, err)
 		}
 		return zero, err
 	}
@@ -278,10 +277,10 @@ func (ds *datastore[E]) Delete(ctx context.Context, id string) error {
 		return err
 	}
 	if rowsAffected > 1 {
-		return NewDataCorruptionError(fmt.Sprintf("data corruption: delete of %s with id %s affected %d rows", ds.jsonField, id, rowsAffected))
+		return errorutil.Internal("data corruption: delete of %s with id %s affected %d rows", ds.jsonField, id, rowsAffected)
 	}
 	if rowsAffected < 1 {
-		return NewNotFoundError(fmt.Sprintf("not found: delete of %s with id %s affected %d rows", ds.jsonField, id, rowsAffected))
+		return errorutil.NotFound("not found: delete of %s with id %s affected %d rows", ds.jsonField, id, rowsAffected)
 	}
 
 	// insert dataset in history table
@@ -330,10 +329,10 @@ func (ds *datastore[E]) DeleteAll(ctx context.Context, ids ...string) error {
 		return err
 	}
 	if rowsAffected != int64(len(ids)) {
-		return NewDataCorruptionError(fmt.Sprintf("data corruption: delete of %s with ids %s affected %d rows", ds.jsonField, ids, rowsAffected))
+		return errorutil.Internal("data corruption: delete of %s with ids %s affected %d rows", ds.jsonField, ids, rowsAffected)
 	}
 	if rowsAffected < 1 {
-		return NewNotFoundError(fmt.Sprintf("not found: delete of %s with id %s affected %d rows", ds.jsonField, ids, rowsAffected))
+		return errorutil.NotFound("not found: delete of %s with id %s affected %d rows", ds.jsonField, ids, rowsAffected)
 	}
 
 	// insert dataset in history table
@@ -440,7 +439,7 @@ func (ds *datastore[E]) getHistoryWithPredicate(ctx context.Context, pred any, v
 		return rows.Scan(ve)
 	}
 	// we have no row
-	return NewNotFoundError(fmt.Sprintf("entity of type:%s with predicate:%s not found", ds.jsonField, pred))
+	return errorutil.NotFound("entity of type:%s with predicate:%s not found", ds.jsonField, pred)
 }
 
 // insertHistory inserts the given entity in the history table of the entity using the runner, which may be a Tx.

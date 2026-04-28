@@ -15,6 +15,7 @@ import (
 
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
+	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
 )
 
 func TestCreateGetUpdateDeleteProject(t *testing.T) {
@@ -56,8 +57,10 @@ func TestCreateGetUpdateDeleteProject(t *testing.T) {
 
 	getresp, err := client.Apiv1().Project().Get(ctx, &v1.ProjectGetRequest{Id: p1.Project.Meta.Id})
 	require.Error(t, err)
-	// FIXME this Error should be a notfound
-	require.EqualError(t, err, "unknown: rpc error: code = NotFound desc = project with id:p1 not found sql: no rows in result set")
+	require.True(t, errorutil.IsNotFound(err))
+	if diff := cmp.Diff(err, errorutil.NotFound("project with id:p1 not found sql: no rows in result set"), errorutil.ConnectErrorComparer()); diff != "" {
+		t.Errorf("diff = %s", diff)
+	}
 	assert.Nil(t, getresp)
 }
 

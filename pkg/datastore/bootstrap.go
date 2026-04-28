@@ -2,7 +2,6 @@ package datastore
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"os"
 	"path"
@@ -15,6 +14,7 @@ import (
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
+	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
 	"github.com/metal-stack/tenant-apiserver/pkg/health"
 	healthv1 "google.golang.org/grpc/health/grpc_health_v1"
 	"sigs.k8s.io/yaml"
@@ -145,7 +145,7 @@ func (bs *bootstrap[E]) createOrUpdate(ctx context.Context, ydoc []byte) error {
 	exists := true
 	existingEntity, err := bs.ds.Get(ctx, mm.GetId())
 	if err != nil {
-		if errors.As(err, &postgres.NotFoundError{}) {
+		if errorutil.IsNotFound(err) {
 			exists = false
 		} else {
 			bs.log.Error("initdb", "error", err)

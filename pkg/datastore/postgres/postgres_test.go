@@ -20,6 +20,7 @@ import (
 
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
+	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -78,7 +79,7 @@ func TestCRUD(t *testing.T) {
 	assert.Equal(t, "A very important Tenant", tcr.GetDescription())
 
 	err = tenantDS.Create(ctx, tcr)
-	require.EqualError(t, err, "an entity of type:tenant with the id:tenant-1 already exists")
+	require.Equal(t, err, errorutil.Conflict("an entity of type:tenant with the id:tenant-1 already exists"))
 
 	// get existing
 	tgr, err := tenantDS.Get(ctx, tcr.Meta.GetId())
@@ -91,13 +92,13 @@ func TestCRUD(t *testing.T) {
 	// get unknown
 	tgr2, err := tenantDS.Get(ctx, "unknown-id")
 	require.Error(t, err)
-	require.EqualError(t, err, "tenant with id:unknown-id not found sql: no rows in result set")
+	require.Equal(t, err, errorutil.NotFound("tenant with id:unknown-id not found sql: no rows in result set"))
 	assert.NotNil(t, &tgr2)
 
 	// update without meta and id
 	err = tenantDS.Update(ctx, tgr2)
 	require.Error(t, err)
-	require.EqualError(t, err, "update of type:tenant failed, meta is nil")
+	require.Equal(t, err, errorutil.InvalidArgument("update of type:tenant failed, meta is nil"))
 
 	// update with unknown id
 	tcr2 := &v1.Tenant{
@@ -107,7 +108,7 @@ func TestCRUD(t *testing.T) {
 	}
 	err = tenantDS.Update(ctx, tcr2)
 	require.Error(t, err)
-	require.EqualError(t, err, "update - no entity of type:tenant with id:tenant-2 found")
+	require.Equal(t, err, errorutil.NotFound("update - no entity of type:tenant with id:tenant-2 found"))
 
 	// update name
 	tcr.Name = "Important Tenant"
@@ -133,7 +134,7 @@ func TestCRUD(t *testing.T) {
 	// delete not existing
 	err = tenantDS.Delete(ctx, tcr.Meta.Id)
 	require.Error(t, err)
-	require.EqualError(t, err, "tenant with id:tenant-1 not found sql: no rows in result set")
+	require.Equal(t, err, errorutil.NotFound("tenant with id:tenant-1 not found sql: no rows in result set"))
 
 }
 
@@ -178,7 +179,7 @@ func TestUpdateOptimisticLock(t *testing.T) {
 	// try to update older version --> optimistic lock error
 	tget.Name = "updated older entity"
 	err = tenantDS.Update(ctx, tget)
-	require.Equal(t, err, NewOptimisticLockError(fmt.Sprintf("optimistic lock error updating tenant with id %s, existing version 1 mismatches entity version 0", tget.GetMeta().Id)))
+	require.Equal(t, err, errorutil.Conflict("optimistic lock error updating tenant with id %s, existing version 1 mismatches entity version 0", tget.GetMeta().Id))
 }
 
 func TestCreate(t *testing.T) {
@@ -195,7 +196,7 @@ func TestCreate(t *testing.T) {
 	// meta is nil
 	err := tenantDS.Create(ctx, tcr1)
 	require.Error(t, err)
-	require.EqualError(t, err, "create of type:tenant failed, meta is nil")
+	require.Equal(t, err, errorutil.InvalidArgument("create of type:tenant failed, meta is nil"))
 
 	// valid entity
 	tcr1 = &v1.Tenant{
@@ -220,7 +221,7 @@ func TestCreate(t *testing.T) {
 	}
 	err = tenantDS.Create(ctx, tcr2)
 	require.Error(t, err)
-	require.EqualError(t, err, "an entity of type:tenant with the id:t1 already exists")
+	require.Equal(t, err, errorutil.Conflict("an entity of type:tenant with the id:t1 already exists"))
 
 	// create with empty id
 	tcr3 := &v1.Tenant{
@@ -258,7 +259,7 @@ func TestCreate(t *testing.T) {
 	}
 	err = tenantDS.Create(ctx, tcr5)
 	require.Error(t, err)
-	require.EqualError(t, err, "create of type:tenant failed, kind is set to:Project but must be:Tenant")
+	require.Equal(t, err, errorutil.InvalidArgument("create of type:tenant failed, kind is set to:Project but must be:Tenant"))
 
 	// create with wrong apiversion
 	tcr6 := &v1.Tenant{
@@ -268,7 +269,7 @@ func TestCreate(t *testing.T) {
 	}
 	err = tenantDS.Create(ctx, tcr6)
 	require.Error(t, err)
-	require.EqualError(t, err, "create of type:tenant failed, apiversion must be set to:v1")
+	require.Equal(t, err, errorutil.InvalidArgument("create of type:tenant failed, apiversion must be set to:v1"))
 }
 
 func TestUpdate(t *testing.T) {
@@ -284,7 +285,7 @@ func TestUpdate(t *testing.T) {
 	}
 	err := tenantDS.Update(ctx, tcr1)
 	require.Error(t, err)
-	require.EqualError(t, err, "update of type:tenant failed, meta is nil")
+	require.Equal(t, err, errorutil.InvalidArgument("update of type:tenant failed, meta is nil"))
 
 	// id is empty
 	tcr1 = &v1.Tenant{
@@ -304,7 +305,7 @@ func TestUpdate(t *testing.T) {
 	}
 	err = tenantDS.Update(ctx, tcr1)
 	require.Error(t, err)
-	require.EqualError(t, err, "update - no entity of type:tenant with id:t3 found")
+	require.Equal(t, err, errorutil.NotFound("update - no entity of type:tenant with id:t3 found"))
 	// create tenant
 	err = tenantDS.Create(ctx, tcr1)
 	require.NoError(t, err)
@@ -331,14 +332,14 @@ func TestUpdate(t *testing.T) {
 	tcr1.Meta.Kind = "WrongKind"
 	err = tenantDS.Update(ctx, tcr1)
 	require.Error(t, err)
-	require.EqualError(t, err, "update of type:tenant failed, kind is set to:WrongKind but must be:Tenant")
+	require.Equal(t, err, errorutil.InvalidArgument("update of type:tenant failed, kind is set to:WrongKind but must be:Tenant"))
 
 	// try update with wrong kind
 	tcr1.Meta.Kind = "Tenant"
 	tcr1.Meta.Apiversion = "v2"
 	err = tenantDS.Update(ctx, tcr1)
 	require.Error(t, err)
-	require.EqualError(t, err, "update of type:tenant failed, apiversion must be set to:v1")
+	require.Equal(t, err, errorutil.InvalidArgument("update of type:tenant failed, apiversion must be set to:v1"))
 
 	checkHistory(ctx, t, t3, time.Now(), "ctenant", "C Tenant 3")
 }
@@ -370,7 +371,7 @@ func TestGet(t *testing.T) {
 	// unknown id
 	_, err := tenantDS.Get(ctx, "unknown-id")
 	require.Error(t, err)
-	require.EqualError(t, err, "tenant with id:unknown-id not found sql: no rows in result set")
+	require.Equal(t, err, errorutil.NotFound("tenant with id:unknown-id not found sql: no rows in result set"))
 
 	// create a tenant
 	tcr1 := &v1.Tenant{
@@ -404,11 +405,11 @@ func TestGetHistory(t *testing.T) {
 	var tgr1 v1.Tenant
 	err := tenantDS.GetHistory(ctx, "unknown-id", tsNow, &tgr1)
 	require.Error(t, err)
-	require.EqualError(t, err, "entity of type:tenant with predicate:[map[id:unknown-id] map[created_at:2020-04-30 18:00:00 +0000 UTC]] not found")
+	require.Equal(t, err, errorutil.NotFound("entity of type:tenant with predicate:[map[id:unknown-id] map[created_at:2020-04-30 18:00:00 +0000 UTC]] not found"))
 
 	err = tenantDS.GetHistoryCreated(ctx, "unknown-id", &tgr1)
 	require.Error(t, err)
-	require.EqualError(t, err, "entity of type:tenant with predicate:[map[id:unknown-id] map[op:C]] not found")
+	require.Equal(t, err, errorutil.NotFound("entity of type:tenant with predicate:[map[id:unknown-id] map[op:C]] not found"))
 
 	// control time.Now()
 	createTS := time.Date(2020, 4, 30, 18, 0, 0, 0, time.UTC)
@@ -418,11 +419,11 @@ func TestGetHistory(t *testing.T) {
 	var tgrH v1.Tenant
 	err = tenantDS.GetHistory(ctx, t5, createTS, &tgrH)
 	require.Error(t, err)
-	require.EqualError(t, err, "entity of type:tenant with predicate:[map[id:t5] map[created_at:2020-04-30 18:00:00 +0000 UTC]] not found")
+	require.Equal(t, err, errorutil.NotFound("entity of type:tenant with predicate:[map[id:t5] map[created_at:2020-04-30 18:00:00 +0000 UTC]] not found"))
 
 	err = tenantDS.GetHistoryCreated(ctx, t5, &tgrH)
 	require.Error(t, err)
-	require.EqualError(t, err, "entity of type:tenant with predicate:[map[id:t5] map[op:C]] not found")
+	require.Equal(t, err, errorutil.NotFound("entity of type:tenant with predicate:[map[id:t5] map[op:C]] not found"))
 
 	// create a tenant
 	tcr1 := &v1.Tenant{
@@ -472,7 +473,7 @@ func TestGetHistory(t *testing.T) {
 	// before create
 	err = tenantDS.GetHistory(ctx, t5, time.Date(2019, 1, 1, 8, 0, 0, 0, time.UTC), &tgrH)
 	require.Error(t, err)
-	require.EqualError(t, err, "entity of type:tenant with predicate:[map[id:t5] map[created_at:2019-01-01 08:00:00 +0000 UTC]] not found")
+	require.Equal(t, err, errorutil.NotFound("entity of type:tenant with predicate:[map[id:t5] map[created_at:2019-01-01 08:00:00 +0000 UTC]] not found"))
 
 	checkHistoryCreated(ctx, t, t5, "dtenant", "D Tenant")
 	checkHistory(ctx, t, t5, createTS, "dtenant", "D Tenant")
@@ -600,7 +601,7 @@ func TestDelete(t *testing.T) {
 	}
 	err := tenantDS.Delete(ctx, tdr1.Meta.Id)
 	require.Error(t, err)
-	require.EqualError(t, err, "tenant with id:unknown-id not found sql: no rows in result set")
+	require.Equal(t, err, errorutil.NotFound("tenant with id:unknown-id not found sql: no rows in result set"))
 
 	// create a tenant
 	tcr1 := &v1.Tenant{
@@ -623,7 +624,7 @@ func TestDelete(t *testing.T) {
 
 	_, err = tenantDS.Get(ctx, t9)
 	require.Error(t, err)
-	require.EqualError(t, err, "tenant with id:t9 not found sql: no rows in result set")
+	require.Equal(t, err, errorutil.NotFound("tenant with id:t9 not found sql: no rows in result set"))
 
 	var tgrh v1.Tenant
 	err = tenantDS.GetHistory(ctx, t9, time.Now(), &tgrh)
@@ -646,7 +647,7 @@ func TestDeleteAll(t *testing.T) {
 	}
 	err := tenantDS.DeleteAll(ctx, tdr1.Meta.Id)
 	require.Error(t, err)
-	require.EqualError(t, err, "tenant with id:unknown-id not found sql: no rows in result set")
+	require.Equal(t, err, errorutil.NotFound("tenant with id:unknown-id not found sql: no rows in result set"))
 
 	// create a tenant
 	tcr1 := &v1.Tenant{
@@ -678,11 +679,11 @@ func TestDeleteAll(t *testing.T) {
 
 	_, err = tenantDS.Get(ctx, t11)
 	require.Error(t, err)
-	require.EqualError(t, err, "tenant with id:t11 not found sql: no rows in result set")
+	require.Equal(t, err, errorutil.NotFound("tenant with id:t11 not found sql: no rows in result set"))
 
 	_, err = tenantDS.Get(ctx, t10)
 	require.Error(t, err)
-	require.EqualError(t, err, "tenant with id:t10 not found sql: no rows in result set")
+	require.Equal(t, err, errorutil.NotFound("tenant with id:t10 not found sql: no rows in result set"))
 
 	var tgrh v1.Tenant
 	err = tenantDS.GetHistory(ctx, t11, time.Now(), &tgrh)
@@ -749,10 +750,7 @@ func TestAnnotationsAndLabels(t *testing.T) {
 	tget.Name = "updated older entity"
 	err = tenantDS.Update(ctx, tget)
 	require.Equal(t, err,
-		NewOptimisticLockError(
-			fmt.Sprintf("optimistic lock error updating tenant with id %s, existing version 1 mismatches entity version 0", tget.GetMeta().Id),
-		),
-	)
+		errorutil.Conflict("optimistic lock error updating tenant with id %s, existing version 1 mismatches entity version 0", tget.GetMeta().Id))
 
 	// update annotations and labels
 	as := tcr.GetMeta().GetAnnotations()
