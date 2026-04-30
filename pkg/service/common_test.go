@@ -6,8 +6,10 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/jmoiron/sqlx"
 	apiv1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-api/go/api/v1/apiv1connect"
@@ -134,4 +136,9 @@ func startTenantApiserverWithDB(t testing.TB, log *slog.Logger, dbcloser func(),
 	require.NoError(t, err)
 
 	return client, closer
+}
+
+func IgnoreUnexported() cmp.Option {
+	// the exporter opt allows all unexported fields: https://github.com/google/go-cmp/pull/176
+	return cmp.Exporter(func(reflect.Type) bool { return true })
 }
