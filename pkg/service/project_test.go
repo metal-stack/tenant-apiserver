@@ -123,20 +123,20 @@ func TestFindProject(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func()
-		req     *v1.ProjectServiceFindRequest
-		want    *v1.ProjectListResponse
+		req     *v1.ProjectServiceListRequest
+		want    *v1.ProjectServiceListResponse
 		wantErr error
 	}{
 		{
 			name: "find by id",
-			req: &v1.ProjectServiceFindRequest{
+			req: &v1.ProjectServiceListRequest{
 				Id: new("1"),
 			},
 			prepare: func() {
 				require.NoError(t, projectStore.Create(ctx, testProject1))
 				require.NoError(t, projectStore.Create(ctx, testProject2))
 			},
-			want: &v1.ProjectListResponse{
+			want: &v1.ProjectServiceListResponse{
 				Projects: []*v1.Project{
 					testProject1,
 				},
@@ -145,28 +145,28 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by id (no results)",
-			req: &v1.ProjectServiceFindRequest{
+			req: &v1.ProjectServiceListRequest{
 				Id: new("no-result"),
 			},
 			prepare: func() {
 				require.NoError(t, projectStore.Create(ctx, testProject1))
 				require.NoError(t, projectStore.Create(ctx, testProject2))
 			},
-			want: &v1.ProjectListResponse{
+			want: &v1.ProjectServiceListResponse{
 				Projects: nil,
 			},
 			wantErr: nil,
 		},
 		{
 			name: "find by name",
-			req: &v1.ProjectServiceFindRequest{
+			req: &v1.ProjectServiceListRequest{
 				Name: new("project-2"),
 			},
 			prepare: func() {
 				require.NoError(t, projectStore.Create(ctx, testProject1))
 				require.NoError(t, projectStore.Create(ctx, testProject2))
 			},
-			want: &v1.ProjectListResponse{
+			want: &v1.ProjectServiceListResponse{
 				Projects: []*v1.Project{
 					testProject2,
 				},
@@ -175,14 +175,14 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by tenant",
-			req: &v1.ProjectServiceFindRequest{
+			req: &v1.ProjectServiceListRequest{
 				TenantId: new("tenant-2"),
 			},
 			prepare: func() {
 				require.NoError(t, projectStore.Create(ctx, testProject1))
 				require.NoError(t, projectStore.Create(ctx, testProject2))
 			},
-			want: &v1.ProjectListResponse{
+			want: &v1.ProjectServiceListResponse{
 				Projects: []*v1.Project{
 					testProject2,
 				},
@@ -191,7 +191,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by annotation",
-			req: &v1.ProjectServiceFindRequest{
+			req: &v1.ProjectServiceListRequest{
 				Annotations: map[string]string{
 					"a": "b",
 				},
@@ -200,7 +200,7 @@ func TestFindProject(t *testing.T) {
 				require.NoError(t, projectStore.Create(ctx, testProject1))
 				require.NoError(t, projectStore.Create(ctx, testProject2))
 			},
-			want: &v1.ProjectListResponse{
+			want: &v1.ProjectServiceListResponse{
 				Projects: []*v1.Project{
 					testProject1,
 				},
@@ -209,7 +209,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by annotation #2",
-			req: &v1.ProjectServiceFindRequest{
+			req: &v1.ProjectServiceListRequest{
 				Annotations: map[string]string{
 					"a": "b",
 					"c": "d",
@@ -219,7 +219,7 @@ func TestFindProject(t *testing.T) {
 				require.NoError(t, projectStore.Create(ctx, testProject1))
 				require.NoError(t, projectStore.Create(ctx, testProject2))
 			},
-			want: &v1.ProjectListResponse{
+			want: &v1.ProjectServiceListResponse{
 				Projects: []*v1.Project{
 					testProject1,
 				},
@@ -228,7 +228,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by annotation #3",
-			req: &v1.ProjectServiceFindRequest{
+			req: &v1.ProjectServiceListRequest{
 				Annotations: map[string]string{
 					"c": "d",
 				},
@@ -237,7 +237,7 @@ func TestFindProject(t *testing.T) {
 				require.NoError(t, projectStore.Create(ctx, testProject1))
 				require.NoError(t, projectStore.Create(ctx, testProject2))
 			},
-			want: &v1.ProjectListResponse{
+			want: &v1.ProjectServiceListResponse{
 				Projects: []*v1.Project{
 					testProject1,
 					testProject2,
@@ -247,14 +247,14 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by label",
-			req: &v1.ProjectServiceFindRequest{
+			req: &v1.ProjectServiceListRequest{
 				Labels: []string{"e"},
 			},
 			prepare: func() {
 				require.NoError(t, projectStore.Create(ctx, testProject1))
 				require.NoError(t, projectStore.Create(ctx, testProject2))
 			},
-			want: &v1.ProjectListResponse{
+			want: &v1.ProjectServiceListResponse{
 				Projects: []*v1.Project{
 					testProject1,
 				},
@@ -263,14 +263,14 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by label #2",
-			req: &v1.ProjectServiceFindRequest{
+			req: &v1.ProjectServiceListRequest{
 				Labels: []string{"e", "f"},
 			},
 			prepare: func() {
 				require.NoError(t, projectStore.Create(ctx, testProject1))
 				require.NoError(t, projectStore.Create(ctx, testProject2))
 			},
-			want: &v1.ProjectListResponse{
+			want: &v1.ProjectServiceListResponse{
 				Projects: []*v1.Project{
 					testProject1,
 				},
@@ -279,14 +279,14 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by label #3",
-			req: &v1.ProjectServiceFindRequest{
+			req: &v1.ProjectServiceListRequest{
 				Labels: []string{"f"},
 			},
 			prepare: func() {
 				require.NoError(t, projectStore.Create(ctx, testProject1))
 				require.NoError(t, projectStore.Create(ctx, testProject2))
 			},
-			want: &v1.ProjectListResponse{
+			want: &v1.ProjectServiceListResponse{
 				Projects: []*v1.Project{
 					testProject1,
 					testProject2,
@@ -306,7 +306,7 @@ func TestFindProject(t *testing.T) {
 				tt.prepare()
 			}
 
-			got, err := service.Find(ctx, tt.req)
+			got, err := service.List(ctx, tt.req)
 			if diff := cmp.Diff(err, tt.wantErr); diff != "" {
 				t.Errorf("(-want +got):\n%s", diff)
 				return

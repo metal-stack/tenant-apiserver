@@ -201,13 +201,13 @@ func TestFindTenantMember(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func()
-		req     *v1.TenantMemberServiceFindRequest
-		want    *v1.TenantMemberListResponse
+		req     *v1.TenantMemberServiceListRequest
+		want    *v1.TenantMemberServiceListResponse
 		wantErr error
 	}{
 		{
 			name: "find by tenant",
-			req: &v1.TenantMemberServiceFindRequest{
+			req: &v1.TenantMemberServiceListRequest{
 				TenantId:  new("tenant-1"),
 				Namespace: "a",
 			},
@@ -219,7 +219,7 @@ func TestFindTenantMember(t *testing.T) {
 				require.NoError(t, tenantMemberStore.Create(ctx, testTenantMember3))
 				require.NoError(t, tenantMemberStore.Create(ctx, testTenantMember4))
 			},
-			want: &v1.TenantMemberListResponse{
+			want: &v1.TenantMemberServiceListResponse{
 				TenantMembers: []*v1.TenantMember{
 					testTenantMember1,
 					testTenantMember3,
@@ -229,7 +229,7 @@ func TestFindTenantMember(t *testing.T) {
 		},
 		{
 			name: "find by tenant id (no results) #1",
-			req: &v1.TenantMemberServiceFindRequest{
+			req: &v1.TenantMemberServiceListRequest{
 				TenantId:  new("no-result"),
 				Namespace: "a",
 			},
@@ -241,14 +241,14 @@ func TestFindTenantMember(t *testing.T) {
 				require.NoError(t, tenantMemberStore.Create(ctx, testTenantMember3))
 				require.NoError(t, tenantMemberStore.Create(ctx, testTenantMember4))
 			},
-			want: &v1.TenantMemberListResponse{
+			want: &v1.TenantMemberServiceListResponse{
 				TenantMembers: nil,
 			},
 			wantErr: nil,
 		},
 		{
 			name: "find by tenant id (no results) #2",
-			req: &v1.TenantMemberServiceFindRequest{
+			req: &v1.TenantMemberServiceListRequest{
 				TenantId:  new("tenant-1"),
 				Namespace: "wrong-namespace",
 			},
@@ -260,14 +260,14 @@ func TestFindTenantMember(t *testing.T) {
 				require.NoError(t, tenantMemberStore.Create(ctx, testTenantMember3))
 				require.NoError(t, tenantMemberStore.Create(ctx, testTenantMember4))
 			},
-			want: &v1.TenantMemberListResponse{
+			want: &v1.TenantMemberServiceListResponse{
 				TenantMembers: nil,
 			},
 			wantErr: nil,
 		},
 		{
 			name: "find by tenant",
-			req: &v1.TenantMemberServiceFindRequest{
+			req: &v1.TenantMemberServiceListRequest{
 				TenantId:  new("tenant-2"),
 				Namespace: "a",
 			},
@@ -279,7 +279,7 @@ func TestFindTenantMember(t *testing.T) {
 				require.NoError(t, tenantMemberStore.Create(ctx, testTenantMember3))
 				require.NoError(t, tenantMemberStore.Create(ctx, testTenantMember4))
 			},
-			want: &v1.TenantMemberListResponse{
+			want: &v1.TenantMemberServiceListResponse{
 				TenantMembers: []*v1.TenantMember{
 					testTenantMember2,
 				},
@@ -288,7 +288,7 @@ func TestFindTenantMember(t *testing.T) {
 		},
 		{
 			name: "find by annotation",
-			req: &v1.TenantMemberServiceFindRequest{
+			req: &v1.TenantMemberServiceListRequest{
 				Annotations: map[string]string{"role": "owner"},
 				Namespace:   "a",
 			},
@@ -300,7 +300,7 @@ func TestFindTenantMember(t *testing.T) {
 				require.NoError(t, tenantMemberStore.Create(ctx, testTenantMember3))
 				require.NoError(t, tenantMemberStore.Create(ctx, testTenantMember4))
 			},
-			want: &v1.TenantMemberListResponse{
+			want: &v1.TenantMemberServiceListResponse{
 				TenantMembers: []*v1.TenantMember{
 					testTenantMember1,
 					testTenantMember2,
@@ -320,7 +320,7 @@ func TestFindTenantMember(t *testing.T) {
 				tt.prepare()
 			}
 
-			got, err := service.Find(ctx, tt.req)
+			got, err := service.List(ctx, tt.req)
 			if diff := cmp.Diff(err, tt.wantErr); diff != "" {
 				t.Errorf("(-want +got):\n%s", diff)
 				return
@@ -370,7 +370,7 @@ func TestUpdateTenantMember(t *testing.T) {
 		name    string
 		prepare func()
 		req     *v1.TenantMemberServiceUpdateRequest
-		want    *v1.TenantMemberResponse
+		want    *v1.TenantMemberServiceUpdateResponse
 		wantErr error
 	}{
 		{
@@ -403,7 +403,7 @@ func TestUpdateTenantMember(t *testing.T) {
 					Namespace: "a",
 				}))
 			},
-			want: &v1.TenantMemberResponse{
+			want: &v1.TenantMemberServiceUpdateResponse{
 				TenantMember: &v1.TenantMember{
 					Meta: &v1.Meta{
 						Id:         "1",

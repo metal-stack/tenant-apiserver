@@ -223,13 +223,13 @@ func TestFindProjectMember(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func()
-		req     *v1.ProjectMemberServiceFindRequest
-		want    *v1.ProjectMemberListResponse
+		req     *v1.ProjectMemberServiceListRequest
+		want    *v1.ProjectMemberServiceListResponse
 		wantErr error
 	}{
 		{
 			name: "find by project",
-			req: &v1.ProjectMemberServiceFindRequest{
+			req: &v1.ProjectMemberServiceListRequest{
 				ProjectId: new("project-1"),
 				Namespace: "a",
 			},
@@ -242,7 +242,7 @@ func TestFindProjectMember(t *testing.T) {
 				require.NoError(t, projectMemberStore.Create(ctx, testProjectMember3))
 				require.NoError(t, projectMemberStore.Create(ctx, testProjectMember4))
 			},
-			want: &v1.ProjectMemberListResponse{
+			want: &v1.ProjectMemberServiceListResponse{
 				ProjectMembers: []*v1.ProjectMember{
 					testProjectMember1,
 					testProjectMember2,
@@ -252,7 +252,7 @@ func TestFindProjectMember(t *testing.T) {
 		},
 		{
 			name: "find by project id (no results) #1",
-			req: &v1.ProjectMemberServiceFindRequest{
+			req: &v1.ProjectMemberServiceListRequest{
 				ProjectId: new("no-result"),
 				Namespace: "a",
 			},
@@ -265,14 +265,14 @@ func TestFindProjectMember(t *testing.T) {
 				require.NoError(t, projectMemberStore.Create(ctx, testProjectMember3))
 				require.NoError(t, projectMemberStore.Create(ctx, testProjectMember4))
 			},
-			want: &v1.ProjectMemberListResponse{
+			want: &v1.ProjectMemberServiceListResponse{
 				ProjectMembers: nil,
 			},
 			wantErr: nil,
 		},
 		{
 			name: "find by project id (no results) #2",
-			req: &v1.ProjectMemberServiceFindRequest{
+			req: &v1.ProjectMemberServiceListRequest{
 				ProjectId: new("project-1"),
 				Namespace: "wrong-namespace",
 			},
@@ -285,14 +285,14 @@ func TestFindProjectMember(t *testing.T) {
 				require.NoError(t, projectMemberStore.Create(ctx, testProjectMember3))
 				require.NoError(t, projectMemberStore.Create(ctx, testProjectMember4))
 			},
-			want: &v1.ProjectMemberListResponse{
+			want: &v1.ProjectMemberServiceListResponse{
 				ProjectMembers: nil,
 			},
 			wantErr: nil,
 		},
 		{
 			name: "find by tenant",
-			req: &v1.ProjectMemberServiceFindRequest{
+			req: &v1.ProjectMemberServiceListRequest{
 				TenantId:  new("tenant-2"),
 				Namespace: "a",
 			},
@@ -305,7 +305,7 @@ func TestFindProjectMember(t *testing.T) {
 				require.NoError(t, projectMemberStore.Create(ctx, testProjectMember3))
 				require.NoError(t, projectMemberStore.Create(ctx, testProjectMember4))
 			},
-			want: &v1.ProjectMemberListResponse{
+			want: &v1.ProjectMemberServiceListResponse{
 				ProjectMembers: []*v1.ProjectMember{
 					testProjectMember2,
 					testProjectMember3,
@@ -315,7 +315,7 @@ func TestFindProjectMember(t *testing.T) {
 		},
 		{
 			name: "find by annotation",
-			req: &v1.ProjectMemberServiceFindRequest{
+			req: &v1.ProjectMemberServiceListRequest{
 				Annotations: map[string]string{"role": "owner"},
 				Namespace:   "a",
 			},
@@ -328,7 +328,7 @@ func TestFindProjectMember(t *testing.T) {
 				require.NoError(t, projectMemberStore.Create(ctx, testProjectMember3))
 				require.NoError(t, projectMemberStore.Create(ctx, testProjectMember4))
 			},
-			want: &v1.ProjectMemberListResponse{
+			want: &v1.ProjectMemberServiceListResponse{
 				ProjectMembers: []*v1.ProjectMember{
 					testProjectMember1,
 					testProjectMember3,
@@ -348,7 +348,7 @@ func TestFindProjectMember(t *testing.T) {
 				tt.prepare()
 			}
 
-			got, err := service.Find(ctx, tt.req)
+			got, err := service.List(ctx, tt.req)
 			if diff := cmp.Diff(err, tt.wantErr); diff != "" {
 				t.Errorf("(-want +got):\n%s", diff)
 				return
@@ -402,7 +402,7 @@ func TestUpdateProjectMember(t *testing.T) {
 		name    string
 		prepare func()
 		req     *v1.ProjectMemberServiceUpdateRequest
-		want    *v1.ProjectMemberResponse
+		want    *v1.ProjectMemberServiceUpdateResponse
 		wantErr error
 	}{
 		{
@@ -435,7 +435,7 @@ func TestUpdateProjectMember(t *testing.T) {
 					Namespace: "a",
 				}))
 			},
-			want: &v1.ProjectMemberResponse{
+			want: &v1.ProjectMemberServiceUpdateResponse{
 				ProjectMember: &v1.ProjectMember{
 					Meta: &v1.Meta{
 						Id:         "1",

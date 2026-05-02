@@ -30,7 +30,7 @@ func NewProjectService(l *slog.Logger, pds ProjectDataStore, pmds ProjectMemberD
 	}
 }
 
-func (s *projectService) Create(ctx context.Context, req *v1.ProjectServiceCreateRequest) (*v1.ProjectResponse, error) {
+func (s *projectService) Create(ctx context.Context, req *v1.ProjectServiceCreateRequest) (*v1.ProjectServiceCreateResponse, error) {
 	project := req.Project
 
 	_, err := s.tenantStore.Get(ctx, project.GetTenantId())
@@ -46,9 +46,9 @@ func (s *projectService) Create(ctx context.Context, req *v1.ProjectServiceCreat
 		project.Meta = &v1.Meta{}
 	}
 	err = s.projectStore.Create(ctx, project)
-	return &v1.ProjectResponse{Project: project}, err
+	return &v1.ProjectServiceCreateResponse{Project: project}, err
 }
-func (s *projectService) Update(ctx context.Context, req *v1.ProjectServiceUpdateRequest) (*v1.ProjectResponse, error) {
+func (s *projectService) Update(ctx context.Context, req *v1.ProjectServiceUpdateRequest) (*v1.ProjectServiceUpdateResponse, error) {
 	old, err := s.projectStore.Get(ctx, req.Project.Meta.Id)
 	if err != nil {
 		return nil, err
@@ -58,9 +58,9 @@ func (s *projectService) Update(ctx context.Context, req *v1.ProjectServiceUpdat
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("update tenant of project:%s is not allowed", project.Meta.Id))
 	}
 	err = s.projectStore.Update(ctx, project)
-	return &v1.ProjectResponse{Project: project}, err
+	return &v1.ProjectServiceUpdateResponse{Project: project}, err
 }
-func (s *projectService) Delete(ctx context.Context, req *v1.ProjectServiceDeleteRequest) (*v1.ProjectResponse, error) {
+func (s *projectService) Delete(ctx context.Context, req *v1.ProjectServiceDeleteRequest) (*v1.ProjectServiceDeleteResponse, error) {
 	project := &v1.Project{
 		Meta: &v1.Meta{Id: req.Id},
 	}
@@ -87,25 +87,25 @@ func (s *projectService) Delete(ctx context.Context, req *v1.ProjectServiceDelet
 	if err != nil {
 		return nil, err
 	}
-	return &v1.ProjectResponse{Project: project}, err
+	return &v1.ProjectServiceDeleteResponse{Project: project}, err
 }
-func (s *projectService) Get(ctx context.Context, req *v1.ProjectServiceGetRequest) (*v1.ProjectResponse, error) {
+func (s *projectService) Get(ctx context.Context, req *v1.ProjectServiceGetRequest) (*v1.ProjectServiceGetResponse, error) {
 	project, err := s.projectStore.Get(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
-	return &v1.ProjectResponse{Project: project}, err
+	return &v1.ProjectServiceGetResponse{Project: project}, err
 }
-func (s *projectService) GetHistory(ctx context.Context, req *v1.ProjectServiceGetHistoryRequest) (*v1.ProjectResponse, error) {
+func (s *projectService) GetHistory(ctx context.Context, req *v1.ProjectServiceGetHistoryRequest) (*v1.ProjectServiceGetHistoryResponse, error) {
 	project := &v1.Project{}
 	at := req.At.AsTime()
 	err := s.projectStore.GetHistory(ctx, req.Id, at, project)
 	if err != nil {
 		return nil, err
 	}
-	return &v1.ProjectResponse{Project: project}, err
+	return &v1.ProjectServiceGetHistoryResponse{Project: project}, err
 }
-func (s *projectService) Find(ctx context.Context, req *v1.ProjectServiceFindRequest) (*v1.ProjectListResponse, error) {
+func (s *projectService) List(ctx context.Context, req *v1.ProjectServiceListRequest) (*v1.ProjectServiceListResponse, error) {
 	var filters []any
 
 	mapFilter := make(map[string]any)
@@ -148,7 +148,7 @@ func (s *projectService) Find(ctx context.Context, req *v1.ProjectServiceFindReq
 	if err != nil {
 		return nil, err
 	}
-	resp := new(v1.ProjectListResponse)
+	resp := new(v1.ProjectServiceListResponse)
 	resp.Projects = append(resp.Projects, res...)
 	resp.NextPage = nextPage
 	return resp, nil

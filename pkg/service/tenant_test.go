@@ -216,20 +216,20 @@ func TestFindTenant(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func()
-		req     *v1.TenantServiceFindRequest
-		want    *v1.TenantListResponse
+		req     *v1.TenantServiceListRequest
+		want    *v1.TenantServiceListResponse
 		wantErr error
 	}{
 		{
 			name: "find by id",
-			req: &v1.TenantServiceFindRequest{
+			req: &v1.TenantServiceListRequest{
 				Id: new("1"),
 			},
 			prepare: func() {
 				require.NoError(t, tenantStore.Create(ctx, testTenant1))
 				require.NoError(t, tenantStore.Create(ctx, testTenant2))
 			},
-			want: &v1.TenantListResponse{
+			want: &v1.TenantServiceListResponse{
 				Tenants: []*v1.Tenant{
 					testTenant1,
 				},
@@ -238,28 +238,28 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by id (no results)",
-			req: &v1.TenantServiceFindRequest{
+			req: &v1.TenantServiceListRequest{
 				Id: new("no-result"),
 			},
 			prepare: func() {
 				require.NoError(t, tenantStore.Create(ctx, testTenant1))
 				require.NoError(t, tenantStore.Create(ctx, testTenant2))
 			},
-			want: &v1.TenantListResponse{
+			want: &v1.TenantServiceListResponse{
 				Tenants: nil,
 			},
 			wantErr: nil,
 		},
 		{
 			name: "find by name",
-			req: &v1.TenantServiceFindRequest{
+			req: &v1.TenantServiceListRequest{
 				Name: new("tenant-2"),
 			},
 			prepare: func() {
 				require.NoError(t, tenantStore.Create(ctx, testTenant1))
 				require.NoError(t, tenantStore.Create(ctx, testTenant2))
 			},
-			want: &v1.TenantListResponse{
+			want: &v1.TenantServiceListResponse{
 				Tenants: []*v1.Tenant{
 					testTenant2,
 				},
@@ -268,7 +268,7 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by annotation",
-			req: &v1.TenantServiceFindRequest{
+			req: &v1.TenantServiceListRequest{
 				Annotations: map[string]string{
 					"a": "b",
 				},
@@ -277,7 +277,7 @@ func TestFindTenant(t *testing.T) {
 				require.NoError(t, tenantStore.Create(ctx, testTenant1))
 				require.NoError(t, tenantStore.Create(ctx, testTenant2))
 			},
-			want: &v1.TenantListResponse{
+			want: &v1.TenantServiceListResponse{
 				Tenants: []*v1.Tenant{
 					testTenant1,
 				},
@@ -286,7 +286,7 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by annotation #2",
-			req: &v1.TenantServiceFindRequest{
+			req: &v1.TenantServiceListRequest{
 				Annotations: map[string]string{
 					"a": "b",
 					"c": "d",
@@ -296,7 +296,7 @@ func TestFindTenant(t *testing.T) {
 				require.NoError(t, tenantStore.Create(ctx, testTenant1))
 				require.NoError(t, tenantStore.Create(ctx, testTenant2))
 			},
-			want: &v1.TenantListResponse{
+			want: &v1.TenantServiceListResponse{
 				Tenants: []*v1.Tenant{
 					testTenant1,
 				},
@@ -305,7 +305,7 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by annotation #3",
-			req: &v1.TenantServiceFindRequest{
+			req: &v1.TenantServiceListRequest{
 				Annotations: map[string]string{
 					"c": "d",
 				},
@@ -314,7 +314,7 @@ func TestFindTenant(t *testing.T) {
 				require.NoError(t, tenantStore.Create(ctx, testTenant1))
 				require.NoError(t, tenantStore.Create(ctx, testTenant2))
 			},
-			want: &v1.TenantListResponse{
+			want: &v1.TenantServiceListResponse{
 				Tenants: []*v1.Tenant{
 					testTenant1,
 					testTenant2,
@@ -324,14 +324,14 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by label",
-			req: &v1.TenantServiceFindRequest{
+			req: &v1.TenantServiceListRequest{
 				Labels: []string{"e"},
 			},
 			prepare: func() {
 				require.NoError(t, tenantStore.Create(ctx, testTenant1))
 				require.NoError(t, tenantStore.Create(ctx, testTenant2))
 			},
-			want: &v1.TenantListResponse{
+			want: &v1.TenantServiceListResponse{
 				Tenants: []*v1.Tenant{
 					testTenant1,
 				},
@@ -340,14 +340,14 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by label #2",
-			req: &v1.TenantServiceFindRequest{
+			req: &v1.TenantServiceListRequest{
 				Labels: []string{"e", "f"},
 			},
 			prepare: func() {
 				require.NoError(t, tenantStore.Create(ctx, testTenant1))
 				require.NoError(t, tenantStore.Create(ctx, testTenant2))
 			},
-			want: &v1.TenantListResponse{
+			want: &v1.TenantServiceListResponse{
 				Tenants: []*v1.Tenant{
 					testTenant1,
 				},
@@ -356,14 +356,14 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by label #3",
-			req: &v1.TenantServiceFindRequest{
+			req: &v1.TenantServiceListRequest{
 				Labels: []string{"f"},
 			},
 			prepare: func() {
 				require.NoError(t, tenantStore.Create(ctx, testTenant1))
 				require.NoError(t, tenantStore.Create(ctx, testTenant2))
 			},
-			want: &v1.TenantListResponse{
+			want: &v1.TenantServiceListResponse{
 				Tenants: []*v1.Tenant{
 					testTenant1,
 					testTenant2,
@@ -383,7 +383,7 @@ func TestFindTenant(t *testing.T) {
 				tt.prepare()
 			}
 
-			got, err := service.Find(ctx, tt.req)
+			got, err := service.List(ctx, tt.req)
 			if diff := cmp.Diff(err, tt.wantErr); diff != "" {
 				t.Errorf("(-want +got):\n%s", diff)
 				return
@@ -433,7 +433,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 		name    string
 		prepare func()
 		req     *v1.TenantServiceFindParticipatingProjectsRequest
-		want    *v1.FindParticipatingProjectsResponse
+		want    *v1.TenantServiceFindParticipatingProjectsResponse
 		wantErr error
 	}{
 		{
@@ -444,7 +444,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 			},
 			prepare: func() {
 			},
-			want:    &v1.FindParticipatingProjectsResponse{},
+			want:    &v1.TenantServiceFindParticipatingProjectsResponse{},
 			wantErr: nil,
 		},
 		{
@@ -461,7 +461,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 					TenantId:  "someone else",
 				}))
 			},
-			want:    &v1.FindParticipatingProjectsResponse{},
+			want:    &v1.TenantServiceFindParticipatingProjectsResponse{},
 			wantErr: nil,
 		},
 		{
@@ -478,7 +478,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 					TenantId:  "a",
 				}))
 			},
-			want: &v1.FindParticipatingProjectsResponse{
+			want: &v1.TenantServiceFindParticipatingProjectsResponse{
 				Projects: []*v1.ProjectWithMembershipAnnotations{{
 					Project: &v1.Project{
 						Meta: &v1.Meta{
@@ -508,7 +508,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 					TenantId:  "a",
 				}))
 			},
-			want: &v1.FindParticipatingProjectsResponse{
+			want: &v1.TenantServiceFindParticipatingProjectsResponse{
 				Projects: nil,
 			},
 			wantErr: nil,
@@ -529,7 +529,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 					Namespace: "a",
 				}))
 			},
-			want: &v1.FindParticipatingProjectsResponse{
+			want: &v1.TenantServiceFindParticipatingProjectsResponse{
 				Projects: []*v1.ProjectWithMembershipAnnotations{{
 					Project: &v1.Project{
 						Meta: &v1.Meta{
@@ -569,7 +569,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 					TenantId: "b",
 				}))
 			},
-			want: &v1.FindParticipatingProjectsResponse{
+			want: &v1.TenantServiceFindParticipatingProjectsResponse{
 				Projects: []*v1.ProjectWithMembershipAnnotations{{
 					Project: &v1.Project{
 						Meta: &v1.Meta{
@@ -594,7 +594,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 				require.NoError(t, projectStore.Create(ctx, &v1.Project{Meta: &v1.Meta{Id: "1"}, TenantId: "b"}))
 				require.NoError(t, tenantMemberStore.Create(ctx, &v1.TenantMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "viewer"}}, TenantId: "b", MemberId: "a"}))
 			},
-			want: &v1.FindParticipatingProjectsResponse{
+			want: &v1.TenantServiceFindParticipatingProjectsResponse{
 				Projects: []*v1.ProjectWithMembershipAnnotations{{
 					Project: &v1.Project{
 						Meta: &v1.Meta{
@@ -641,7 +641,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 					TenantId:  "parent",
 				}))
 			},
-			want: &v1.FindParticipatingProjectsResponse{
+			want: &v1.TenantServiceFindParticipatingProjectsResponse{
 				Projects: []*v1.ProjectWithMembershipAnnotations{
 					{
 						Project: &v1.Project{
@@ -734,7 +734,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 		name    string
 		req     *v1.TenantServiceFindParticipatingTenantsRequest
 		prepare func()
-		want    *v1.FindParticipatingTenantsResponse
+		want    *v1.TenantServiceFindParticipatingTenantsResponse
 		wantErr error
 	}{
 		{
@@ -744,7 +744,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 				IncludeInherited: new(true),
 			},
 			prepare: func() {},
-			want:    &v1.FindParticipatingTenantsResponse{},
+			want:    &v1.TenantServiceFindParticipatingTenantsResponse{},
 			wantErr: nil,
 		},
 		{
@@ -763,7 +763,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 				err = tenantMemberStore.Create(ctx, &v1.TenantMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "admin"}}, MemberId: "c", TenantId: "b"})
 				require.NoError(t, err)
 			},
-			want:    &v1.FindParticipatingTenantsResponse{},
+			want:    &v1.TenantServiceFindParticipatingTenantsResponse{},
 			wantErr: err,
 		},
 		{
@@ -778,7 +778,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 				err = tenantMemberStore.Create(ctx, &v1.TenantMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "admin"}}, MemberId: "a", TenantId: "b"})
 				require.NoError(t, err)
 			},
-			want: &v1.FindParticipatingTenantsResponse{
+			want: &v1.TenantServiceFindParticipatingTenantsResponse{
 				Tenants: []*v1.TenantWithMembershipAnnotations{
 					{
 						Tenant: &v1.Tenant{
@@ -807,7 +807,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 				err = tenantMemberStore.Create(ctx, &v1.TenantMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "admin"}}, MemberId: "a", TenantId: "b"})
 				require.NoError(t, err)
 			},
-			want: &v1.FindParticipatingTenantsResponse{
+			want: &v1.TenantServiceFindParticipatingTenantsResponse{
 				Tenants: nil,
 			},
 			wantErr: nil,
@@ -825,7 +825,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 				err = tenantMemberStore.Create(ctx, &v1.TenantMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "admin"}}, Namespace: "a", MemberId: "a", TenantId: "b"})
 				require.NoError(t, err)
 			},
-			want: &v1.FindParticipatingTenantsResponse{
+			want: &v1.TenantServiceFindParticipatingTenantsResponse{
 				Tenants: []*v1.TenantWithMembershipAnnotations{
 					{
 						Tenant: &v1.Tenant{
@@ -855,7 +855,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 				err = projectMemberStore.Create(ctx, &v1.ProjectMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "admin"}}, ProjectId: "1", TenantId: "a"})
 				require.NoError(t, err)
 			},
-			want: &v1.FindParticipatingTenantsResponse{
+			want: &v1.TenantServiceFindParticipatingTenantsResponse{
 				Tenants: []*v1.TenantWithMembershipAnnotations{
 					{
 						Tenant: &v1.Tenant{
@@ -885,7 +885,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 				err = projectMemberStore.Create(ctx, &v1.ProjectMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "admin"}}, ProjectId: "1", TenantId: "a"})
 				require.NoError(t, err)
 			},
-			want:    &v1.FindParticipatingTenantsResponse{},
+			want:    &v1.TenantServiceFindParticipatingTenantsResponse{},
 			wantErr: nil,
 		},
 		{
@@ -927,7 +927,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 					Namespace: "other",
 				}))
 			},
-			want: &v1.FindParticipatingTenantsResponse{
+			want: &v1.TenantServiceFindParticipatingTenantsResponse{
 				Tenants: []*v1.TenantWithMembershipAnnotations{
 					{
 						Tenant: &v1.Tenant{
@@ -1018,7 +1018,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 		name    string
 		req     *v1.TenantServiceListTenantMembersRequest
 		prepare func()
-		want    *v1.ListTenantMembersResponse
+		want    *v1.TenantServiceListTenantMembersResponse
 		wantErr error
 	}{
 		{
@@ -1029,7 +1029,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 			},
 			prepare: func() {
 			},
-			want:    &v1.ListTenantMembersResponse{},
+			want:    &v1.TenantServiceListTenantMembersResponse{},
 			wantErr: err,
 		},
 		{
@@ -1048,7 +1048,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 				err = tenantMemberStore.Create(ctx, &v1.TenantMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "admin"}}, MemberId: "azure", TenantId: "google"})
 				require.NoError(t, err)
 			},
-			want:    &v1.ListTenantMembersResponse{},
+			want:    &v1.TenantServiceListTenantMembersResponse{},
 			wantErr: err,
 		},
 		{
@@ -1063,7 +1063,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 				err = tenantMemberStore.Create(ctx, &v1.TenantMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "admin"}}, MemberId: "azure", TenantId: "acme"})
 				require.NoError(t, err)
 			},
-			want: &v1.ListTenantMembersResponse{
+			want: &v1.TenantServiceListTenantMembersResponse{
 				Tenants: []*v1.TenantWithMembershipAnnotations{
 					{
 						Tenant: &v1.Tenant{
@@ -1092,7 +1092,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 				err = tenantMemberStore.Create(ctx, &v1.TenantMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "admin"}}, MemberId: "azure", TenantId: "acme"})
 				require.NoError(t, err)
 			},
-			want: &v1.ListTenantMembersResponse{
+			want: &v1.TenantServiceListTenantMembersResponse{
 				Tenants: nil,
 			},
 			wantErr: nil,
@@ -1110,7 +1110,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 				err = tenantMemberStore.Create(ctx, &v1.TenantMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "admin"}}, Namespace: "a", MemberId: "azure", TenantId: "acme"})
 				require.NoError(t, err)
 			},
-			want: &v1.ListTenantMembersResponse{
+			want: &v1.TenantServiceListTenantMembersResponse{
 				Tenants: []*v1.TenantWithMembershipAnnotations{
 					{
 						Tenant: &v1.Tenant{
@@ -1140,7 +1140,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 				err = projectMemberStore.Create(ctx, &v1.ProjectMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "editor"}}, ProjectId: "1", TenantId: "google"})
 				require.NoError(t, err)
 			},
-			want: &v1.ListTenantMembersResponse{
+			want: &v1.TenantServiceListTenantMembersResponse{
 				Tenants: []*v1.TenantWithMembershipAnnotations{
 					{
 						Tenant: &v1.Tenant{
@@ -1172,7 +1172,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 				err = projectMemberStore.Create(ctx, &v1.ProjectMember{Meta: &v1.Meta{Annotations: map[string]string{"role": "editor"}}, ProjectId: "1", TenantId: "google"})
 				require.NoError(t, err)
 			},
-			want:    &v1.ListTenantMembersResponse{},
+			want:    &v1.TenantServiceListTenantMembersResponse{},
 			wantErr: nil,
 		},
 		{
@@ -1199,7 +1199,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 				err = tenantMemberStore.Create(ctx, &v1.TenantMember{Meta: &v1.Meta{Annotations: map[string]string{"tenant-role": "owner"}}, MemberId: "github", TenantId: "github"})
 				require.NoError(t, err)
 			},
-			want: &v1.ListTenantMembersResponse{
+			want: &v1.TenantServiceListTenantMembersResponse{
 				Tenants: []*v1.TenantWithMembershipAnnotations{
 					{
 						Tenant: &v1.Tenant{

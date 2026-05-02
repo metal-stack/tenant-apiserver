@@ -38,22 +38,22 @@ func NewTenantService(db *sqlx.DB, l *slog.Logger, tds TenantDataStore, tmds Ten
 	}
 }
 
-func (s *tenantService) Create(ctx context.Context, req *v1.TenantServiceCreateRequest) (*v1.TenantResponse, error) {
+func (s *tenantService) Create(ctx context.Context, req *v1.TenantServiceCreateRequest) (*v1.TenantServiceCreateResponse, error) {
 	tenant := req.Tenant
 	// allow create without sending Meta
 	if tenant.Meta == nil {
 		tenant.Meta = &v1.Meta{}
 	}
 	err := s.tenantStore.Create(ctx, tenant)
-	return &v1.TenantResponse{Tenant: tenant}, err
+	return &v1.TenantServiceCreateResponse{Tenant: tenant}, err
 }
-func (s *tenantService) Update(ctx context.Context, req *v1.TenantServiceUpdateRequest) (*v1.TenantResponse, error) {
+func (s *tenantService) Update(ctx context.Context, req *v1.TenantServiceUpdateRequest) (*v1.TenantServiceUpdateResponse, error) {
 	tenant := req.Tenant
 	err := s.tenantStore.Update(ctx, tenant)
-	return &v1.TenantResponse{Tenant: tenant}, err
+	return &v1.TenantServiceUpdateResponse{Tenant: tenant}, err
 }
 
-func (s *tenantService) Delete(ctx context.Context, req *v1.TenantServiceDeleteRequest) (*v1.TenantResponse, error) {
+func (s *tenantService) Delete(ctx context.Context, req *v1.TenantServiceDeleteRequest) (*v1.TenantServiceDeleteResponse, error) {
 	tenant := &v1.Tenant{
 		Meta: &v1.Meta{Id: req.Id},
 	}
@@ -95,20 +95,20 @@ func (s *tenantService) Delete(ctx context.Context, req *v1.TenantServiceDeleteR
 	if err != nil {
 		return nil, err
 	}
-	return &v1.TenantResponse{Tenant: tenant}, nil
+	return &v1.TenantServiceDeleteResponse{Tenant: tenant}, nil
 }
 
-func (s *tenantService) Get(ctx context.Context, req *v1.TenantServiceGetRequest) (*v1.TenantResponse, error) {
+func (s *tenantService) Get(ctx context.Context, req *v1.TenantServiceGetRequest) (*v1.TenantServiceGetResponse, error) {
 	tenant, err := s.tenantStore.Get(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
 	// response with entity, no error
-	return &v1.TenantResponse{Tenant: tenant}, err
+	return &v1.TenantServiceGetResponse{Tenant: tenant}, err
 }
 
-func (s *tenantService) GetHistory(ctx context.Context, req *v1.TenantServiceGetHistoryRequest) (*v1.TenantResponse, error) {
+func (s *tenantService) GetHistory(ctx context.Context, req *v1.TenantServiceGetHistoryRequest) (*v1.TenantServiceGetHistoryResponse, error) {
 	tenant := &v1.Tenant{}
 	at := req.At.AsTime()
 	s.log.Info("getHistory", "id", req.Id, "at", at)
@@ -118,10 +118,10 @@ func (s *tenantService) GetHistory(ctx context.Context, req *v1.TenantServiceGet
 	}
 
 	// response with entity, no error
-	return &v1.TenantResponse{Tenant: tenant}, err
+	return &v1.TenantServiceGetHistoryResponse{Tenant: tenant}, err
 }
 
-func (s *tenantService) Find(ctx context.Context, req *v1.TenantServiceFindRequest) (*v1.TenantListResponse, error) {
+func (s *tenantService) List(ctx context.Context, req *v1.TenantServiceListRequest) (*v1.TenantServiceListResponse, error) {
 	var filters []any
 
 	mapFilter := make(map[string]any)
@@ -157,7 +157,7 @@ func (s *tenantService) Find(ctx context.Context, req *v1.TenantServiceFindReque
 	if err != nil {
 		return nil, err
 	}
-	resp := new(v1.TenantListResponse)
+	resp := new(v1.TenantServiceListResponse)
 	resp.Tenants = append(resp.Tenants, res...)
 	resp.NextPage = nextPage
 	return resp, nil
@@ -188,7 +188,7 @@ var (
 // FindParticipatingProjects returns all projects in which a member participates.
 // This includes projects in which the member is explicitly participating through a project membership but may also
 // include memberships, which are inherited by the tenant membership.
-func (s *tenantService) FindParticipatingProjects(ctx context.Context, req *v1.TenantServiceFindParticipatingProjectsRequest) (*v1.FindParticipatingProjectsResponse, error) {
+func (s *tenantService) FindParticipatingProjects(ctx context.Context, req *v1.TenantServiceFindParticipatingProjectsRequest) (*v1.TenantServiceFindParticipatingProjectsResponse, error) {
 	type result struct {
 		Project                      *v1.Project
 		TenantMembershipAnnotations  []byte `db:"tenant_membership_annotations"`
@@ -250,7 +250,7 @@ func (s *tenantService) FindParticipatingProjects(ctx context.Context, req *v1.T
 		res = append(res, p)
 	}
 
-	return &v1.FindParticipatingProjectsResponse{Projects: res}, nil
+	return &v1.TenantServiceFindParticipatingProjectsResponse{Projects: res}, nil
 }
 
 var (
@@ -279,7 +279,7 @@ var (
 // FindParticipatingTenants returns all tenants in which a member participates.
 // This includes tenants in which the member is explicitly participating through a tenant membership but may also
 // include memberships, which are inherited by the project memberships (e.g. through project invites).
-func (s *tenantService) FindParticipatingTenants(ctx context.Context, req *v1.TenantServiceFindParticipatingTenantsRequest) (*v1.FindParticipatingTenantsResponse, error) {
+func (s *tenantService) FindParticipatingTenants(ctx context.Context, req *v1.TenantServiceFindParticipatingTenantsRequest) (*v1.TenantServiceFindParticipatingTenantsResponse, error) {
 	type result struct {
 		Tenant                       *v1.Tenant
 		TenantMembershipAnnotations  []byte `db:"tenant_membership_annotations"`
@@ -341,7 +341,7 @@ func (s *tenantService) FindParticipatingTenants(ctx context.Context, req *v1.Te
 		res = append(res, t)
 	}
 
-	return &v1.FindParticipatingTenantsResponse{Tenants: res}, nil
+	return &v1.TenantServiceFindParticipatingTenantsResponse{Tenants: res}, nil
 }
 
 var (
@@ -370,7 +370,7 @@ var (
 // ListTenantMembers returns all members of a tenant.
 // This includes members which are explicitly participating through a tenant membership but may also
 // include memberships, which are inherited by the project memberships (e.g. through project invites).
-func (s *tenantService) ListTenantMembers(ctx context.Context, req *v1.TenantServiceListTenantMembersRequest) (*v1.ListTenantMembersResponse, error) {
+func (s *tenantService) ListTenantMembers(ctx context.Context, req *v1.TenantServiceListTenantMembersRequest) (*v1.TenantServiceListTenantMembersResponse, error) {
 	type result struct {
 		Tenant                      *v1.Tenant
 		TenantMembershipAnnotations []byte `db:"tenant_membership_annotations"`
@@ -429,5 +429,5 @@ func (s *tenantService) ListTenantMembers(ctx context.Context, req *v1.TenantSer
 		res = append(res, t)
 	}
 
-	return &v1.ListTenantMembersResponse{Tenants: res}, nil
+	return &v1.TenantServiceListTenantMembersResponse{Tenants: res}, nil
 }
