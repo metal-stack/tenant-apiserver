@@ -15,9 +15,9 @@ func TestGetVersion(t *testing.T) {
 	vs := &versionService{}
 	ctx := context.Background()
 
-	expected := v1.GetVersionResponse{Version: v.Version, Revision: v.Revision, BuildDate: v.BuildDate, GitSha1: v.GitSHA1}
+	expected := v1.VersionServiceGetResponse{Version: v.Version, Revision: v.Revision, BuildDate: v.BuildDate, GitSha1: v.GitSHA1}
 
-	result, err := vs.Get(ctx, &v1.GetVersionRequest{})
+	result, err := vs.Get(ctx, &v1.VersionServiceGetRequest{})
 
 	require.NoError(t, err)
 	assert.NotNil(t, result)

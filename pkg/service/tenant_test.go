@@ -216,13 +216,13 @@ func TestFindTenant(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func()
-		req     *v1.TenantFindRequest
+		req     *v1.TenantServiceFindRequest
 		want    *v1.TenantListResponse
 		wantErr error
 	}{
 		{
 			name: "find by id",
-			req: &v1.TenantFindRequest{
+			req: &v1.TenantServiceFindRequest{
 				Id: new("1"),
 			},
 			prepare: func() {
@@ -238,7 +238,7 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by id (no results)",
-			req: &v1.TenantFindRequest{
+			req: &v1.TenantServiceFindRequest{
 				Id: new("no-result"),
 			},
 			prepare: func() {
@@ -252,7 +252,7 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by name",
-			req: &v1.TenantFindRequest{
+			req: &v1.TenantServiceFindRequest{
 				Name: new("tenant-2"),
 			},
 			prepare: func() {
@@ -268,7 +268,7 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by annotation",
-			req: &v1.TenantFindRequest{
+			req: &v1.TenantServiceFindRequest{
 				Annotations: map[string]string{
 					"a": "b",
 				},
@@ -286,7 +286,7 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by annotation #2",
-			req: &v1.TenantFindRequest{
+			req: &v1.TenantServiceFindRequest{
 				Annotations: map[string]string{
 					"a": "b",
 					"c": "d",
@@ -305,7 +305,7 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by annotation #3",
-			req: &v1.TenantFindRequest{
+			req: &v1.TenantServiceFindRequest{
 				Annotations: map[string]string{
 					"c": "d",
 				},
@@ -324,7 +324,7 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by label",
-			req: &v1.TenantFindRequest{
+			req: &v1.TenantServiceFindRequest{
 				Labels: []string{"e"},
 			},
 			prepare: func() {
@@ -340,7 +340,7 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by label #2",
-			req: &v1.TenantFindRequest{
+			req: &v1.TenantServiceFindRequest{
 				Labels: []string{"e", "f"},
 			},
 			prepare: func() {
@@ -356,7 +356,7 @@ func TestFindTenant(t *testing.T) {
 		},
 		{
 			name: "find by label #3",
-			req: &v1.TenantFindRequest{
+			req: &v1.TenantServiceFindRequest{
 				Labels: []string{"f"},
 			},
 			prepare: func() {
@@ -432,13 +432,13 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func()
-		req     *v1.FindParticipatingProjectsRequest
+		req     *v1.TenantServiceFindParticipatingProjectsRequest
 		want    *v1.FindParticipatingProjectsResponse
 		wantErr error
 	}{
 		{
 			name: "no memberships",
-			req: &v1.FindParticipatingProjectsRequest{
+			req: &v1.TenantServiceFindParticipatingProjectsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 			},
@@ -449,7 +449,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 		},
 		{
 			name: "ignores foreign memberships",
-			req: &v1.FindParticipatingProjectsRequest{
+			req: &v1.TenantServiceFindParticipatingProjectsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 			},
@@ -466,7 +466,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 		},
 		{
 			name: "direct membership including 0 inherited",
-			req: &v1.FindParticipatingProjectsRequest{
+			req: &v1.TenantServiceFindParticipatingProjectsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 			},
@@ -495,7 +495,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 		},
 		{
 			name: "no direct membership in other namespace",
-			req: &v1.FindParticipatingProjectsRequest{
+			req: &v1.TenantServiceFindParticipatingProjectsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 				Namespace:        "other",
@@ -515,7 +515,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 		},
 		{
 			name: "direct membership in a namespace",
-			req: &v1.FindParticipatingProjectsRequest{
+			req: &v1.TenantServiceFindParticipatingProjectsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 				Namespace:        "a",
@@ -546,7 +546,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 		},
 		{
 			name: "direct membership excluding inherited",
-			req: &v1.FindParticipatingProjectsRequest{
+			req: &v1.TenantServiceFindParticipatingProjectsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(false),
 			},
@@ -586,7 +586,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 		},
 		{
 			name: "inherited membership",
-			req: &v1.FindParticipatingProjectsRequest{
+			req: &v1.TenantServiceFindParticipatingProjectsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 			},
@@ -612,7 +612,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 		},
 		{
 			name: "direct and indirect memberships including inherited",
-			req: &v1.FindParticipatingProjectsRequest{
+			req: &v1.TenantServiceFindParticipatingProjectsRequest{
 				TenantId:         "req-tenant",
 				IncludeInherited: new(true),
 			},
@@ -732,14 +732,14 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		req     *v1.FindParticipatingTenantsRequest
+		req     *v1.TenantServiceFindParticipatingTenantsRequest
 		prepare func()
 		want    *v1.FindParticipatingTenantsResponse
 		wantErr error
 	}{
 		{
 			name: "no memberships",
-			req: &v1.FindParticipatingTenantsRequest{
+			req: &v1.TenantServiceFindParticipatingTenantsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 			},
@@ -749,7 +749,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 		},
 		{
 			name: "ignore foreign memberships",
-			req: &v1.FindParticipatingTenantsRequest{
+			req: &v1.TenantServiceFindParticipatingTenantsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 			},
@@ -768,7 +768,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 		},
 		{
 			name: "direct membership",
-			req: &v1.FindParticipatingTenantsRequest{
+			req: &v1.TenantServiceFindParticipatingTenantsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 			},
@@ -796,7 +796,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 		},
 		{
 			name: "no direct membership when in different namespace",
-			req: &v1.FindParticipatingTenantsRequest{
+			req: &v1.TenantServiceFindParticipatingTenantsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 				Namespace:        "other",
@@ -814,7 +814,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 		},
 		{
 			name: "direct membership in namespace",
-			req: &v1.FindParticipatingTenantsRequest{
+			req: &v1.TenantServiceFindParticipatingTenantsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 				Namespace:        "a",
@@ -843,7 +843,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 		},
 		{
 			name: "indirect membership",
-			req: &v1.FindParticipatingTenantsRequest{
+			req: &v1.TenantServiceFindParticipatingTenantsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(true),
 			},
@@ -873,7 +873,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 		},
 		{
 			name: "exclude inherited",
-			req: &v1.FindParticipatingTenantsRequest{
+			req: &v1.TenantServiceFindParticipatingTenantsRequest{
 				TenantId:         "a",
 				IncludeInherited: new(false),
 			},
@@ -890,7 +890,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 		},
 		{
 			name: "direct and indirect memberships (without interference with other namespaces)",
-			req: &v1.FindParticipatingTenantsRequest{
+			req: &v1.TenantServiceFindParticipatingTenantsRequest{
 				TenantId:         "req-tnt",
 				IncludeInherited: new(true),
 			},
@@ -1016,14 +1016,14 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		req     *v1.ListTenantMembersRequest
+		req     *v1.TenantServiceListTenantMembersRequest
 		prepare func()
 		want    *v1.ListTenantMembersResponse
 		wantErr error
 	}{
 		{
 			name: "no members",
-			req: &v1.ListTenantMembersRequest{
+			req: &v1.TenantServiceListTenantMembersRequest{
 				TenantId:         "acme",
 				IncludeInherited: new(true),
 			},
@@ -1034,7 +1034,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 		},
 		{
 			name: "ignore foreign members",
-			req: &v1.ListTenantMembersRequest{
+			req: &v1.TenantServiceListTenantMembersRequest{
 				TenantId:         "acme",
 				IncludeInherited: new(true),
 			},
@@ -1053,7 +1053,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 		},
 		{
 			name: "direct membership",
-			req: &v1.ListTenantMembersRequest{
+			req: &v1.TenantServiceListTenantMembersRequest{
 				TenantId:         "acme",
 				IncludeInherited: new(true),
 			},
@@ -1081,7 +1081,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 		},
 		{
 			name: "no direct membership in other namespace",
-			req: &v1.ListTenantMembersRequest{
+			req: &v1.TenantServiceListTenantMembersRequest{
 				TenantId:         "acme",
 				IncludeInherited: new(true),
 				Namespace:        "other",
@@ -1099,7 +1099,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 		},
 		{
 			name: "direct membership in namespace",
-			req: &v1.ListTenantMembersRequest{
+			req: &v1.TenantServiceListTenantMembersRequest{
 				TenantId:         "acme",
 				IncludeInherited: new(true),
 				Namespace:        "a",
@@ -1128,7 +1128,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 		},
 		{
 			name: "indirect membership",
-			req: &v1.ListTenantMembersRequest{
+			req: &v1.TenantServiceListTenantMembersRequest{
 				TenantId:         "acme",
 				IncludeInherited: new(true),
 			},
@@ -1160,7 +1160,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 		},
 		{
 			name: "exclude inherited",
-			req: &v1.ListTenantMembersRequest{
+			req: &v1.TenantServiceListTenantMembersRequest{
 				TenantId:         "acme",
 				IncludeInherited: new(false),
 			},
@@ -1177,7 +1177,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 		},
 		{
 			name: "indirect membership in multiple projects",
-			req: &v1.ListTenantMembersRequest{
+			req: &v1.TenantServiceListTenantMembersRequest{
 				TenantId:         "github",
 				IncludeInherited: new(true),
 			},

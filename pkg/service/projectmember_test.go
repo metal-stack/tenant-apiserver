@@ -223,13 +223,13 @@ func TestFindProjectMember(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func()
-		req     *v1.ProjectMemberFindRequest
+		req     *v1.ProjectMemberServiceFindRequest
 		want    *v1.ProjectMemberListResponse
 		wantErr error
 	}{
 		{
 			name: "find by project",
-			req: &v1.ProjectMemberFindRequest{
+			req: &v1.ProjectMemberServiceFindRequest{
 				ProjectId: new("project-1"),
 				Namespace: "a",
 			},
@@ -252,7 +252,7 @@ func TestFindProjectMember(t *testing.T) {
 		},
 		{
 			name: "find by project id (no results) #1",
-			req: &v1.ProjectMemberFindRequest{
+			req: &v1.ProjectMemberServiceFindRequest{
 				ProjectId: new("no-result"),
 				Namespace: "a",
 			},
@@ -272,7 +272,7 @@ func TestFindProjectMember(t *testing.T) {
 		},
 		{
 			name: "find by project id (no results) #2",
-			req: &v1.ProjectMemberFindRequest{
+			req: &v1.ProjectMemberServiceFindRequest{
 				ProjectId: new("project-1"),
 				Namespace: "wrong-namespace",
 			},
@@ -292,7 +292,7 @@ func TestFindProjectMember(t *testing.T) {
 		},
 		{
 			name: "find by tenant",
-			req: &v1.ProjectMemberFindRequest{
+			req: &v1.ProjectMemberServiceFindRequest{
 				TenantId:  new("tenant-2"),
 				Namespace: "a",
 			},
@@ -315,7 +315,7 @@ func TestFindProjectMember(t *testing.T) {
 		},
 		{
 			name: "find by annotation",
-			req: &v1.ProjectMemberFindRequest{
+			req: &v1.ProjectMemberServiceFindRequest{
 				Annotations: map[string]string{"role": "owner"},
 				Namespace:   "a",
 			},
@@ -401,13 +401,13 @@ func TestUpdateProjectMember(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func()
-		req     *v1.ProjectMemberUpdateRequest
+		req     *v1.ProjectMemberServiceUpdateRequest
 		want    *v1.ProjectMemberResponse
 		wantErr error
 	}{
 		{
 			name: "update mutable fields",
-			req: &v1.ProjectMemberUpdateRequest{
+			req: &v1.ProjectMemberServiceUpdateRequest{
 				ProjectMember: &v1.ProjectMember{
 					Meta: &v1.Meta{
 						Id:      "1",
@@ -456,7 +456,7 @@ func TestUpdateProjectMember(t *testing.T) {
 		},
 		{
 			name: "unable to update namespace",
-			req: &v1.ProjectMemberUpdateRequest{
+			req: &v1.ProjectMemberServiceUpdateRequest{
 				ProjectMember: &v1.ProjectMember{
 					Meta: &v1.Meta{
 						Id:      "1",
@@ -485,7 +485,7 @@ func TestUpdateProjectMember(t *testing.T) {
 		},
 		{
 			name: "unable to update project",
-			req: &v1.ProjectMemberUpdateRequest{
+			req: &v1.ProjectMemberServiceUpdateRequest{
 				ProjectMember: &v1.ProjectMember{
 					Meta: &v1.Meta{
 						Id:      "1",
@@ -514,7 +514,7 @@ func TestUpdateProjectMember(t *testing.T) {
 		},
 		{
 			name: "unable to update tenant",
-			req: &v1.ProjectMemberUpdateRequest{
+			req: &v1.ProjectMemberServiceUpdateRequest{
 				ProjectMember: &v1.ProjectMember{
 					Meta: &v1.Meta{
 						Id:      "1",

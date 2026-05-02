@@ -22,19 +22,19 @@ func TestCreateGetUpdateDeleteProject(t *testing.T) {
 	client, closer := startTenantApiserverWithPostgres(t, log)
 	defer closer()
 
-	t1, err := client.Apiv1().Tenant().Create(ctx, &v1.TenantCreateRequest{Tenant: &v1.Tenant{
+	t1, err := client.Apiv1().Tenant().Create(ctx, &v1.TenantServiceCreateRequest{Tenant: &v1.Tenant{
 		Meta: &v1.Meta{Id: "t1"},
 		Name: "t1",
 	}})
 	require.NoError(t, err)
-	p1, err := client.Apiv1().Project().Create(ctx, &v1.ProjectCreateRequest{Project: &v1.Project{
+	p1, err := client.Apiv1().Project().Create(ctx, &v1.ProjectServiceCreateRequest{Project: &v1.Project{
 		Meta:     &v1.Meta{Id: "p1"},
 		Name:     "p1",
 		TenantId: t1.GetTenant().Meta.Id,
 	}})
 	require.NoError(t, err)
 
-	resp, err := client.Apiv1().Project().Get(ctx, &v1.ProjectGetRequest{Id: p1.Project.Meta.Id})
+	resp, err := client.Apiv1().Project().Get(ctx, &v1.ProjectServiceGetRequest{Id: p1.Project.Meta.Id})
 	require.NoError(t, err)
 	assert.NotNil(t, resp)
 	assert.NotNil(t, resp.Project)
@@ -43,18 +43,18 @@ func TestCreateGetUpdateDeleteProject(t *testing.T) {
 	updatedProject := resp.Project
 	updatedProject.Description = "Some Project"
 
-	updateresp, err := client.Apiv1().Project().Update(ctx, &v1.ProjectUpdateRequest{Project: updatedProject})
+	updateresp, err := client.Apiv1().Project().Update(ctx, &v1.ProjectServiceUpdateRequest{Project: updatedProject})
 	require.NoError(t, err)
 	assert.NotNil(t, updateresp)
 	assert.NotNil(t, updateresp.Project)
 	assert.Equal(t, "Some Project", updateresp.Project.Description)
 
-	deleteResp, err := client.Apiv1().Project().Delete(ctx, &v1.ProjectDeleteRequest{Id: p1.Project.Meta.Id})
+	deleteResp, err := client.Apiv1().Project().Delete(ctx, &v1.ProjectServiceDeleteRequest{Id: p1.Project.Meta.Id})
 	require.NoError(t, err)
 	assert.NotNil(t, deleteResp)
 	assert.Equal(t, p1.Project.Meta.Id, deleteResp.Project.GetMeta().GetId())
 
-	getresp, err := client.Apiv1().Project().Get(ctx, &v1.ProjectGetRequest{Id: p1.Project.Meta.Id})
+	getresp, err := client.Apiv1().Project().Get(ctx, &v1.ProjectServiceGetRequest{Id: p1.Project.Meta.Id})
 	require.Error(t, err)
 	require.True(t, errorutil.IsNotFound(err))
 	if diff := cmp.Diff(err, errorutil.NotFound("project with id:p1 not found sql: no rows in result set"), errorutil.ConnectErrorComparer()); diff != "" {
@@ -123,13 +123,13 @@ func TestFindProject(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func()
-		req     *v1.ProjectFindRequest
+		req     *v1.ProjectServiceFindRequest
 		want    *v1.ProjectListResponse
 		wantErr error
 	}{
 		{
 			name: "find by id",
-			req: &v1.ProjectFindRequest{
+			req: &v1.ProjectServiceFindRequest{
 				Id: new("1"),
 			},
 			prepare: func() {
@@ -145,7 +145,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by id (no results)",
-			req: &v1.ProjectFindRequest{
+			req: &v1.ProjectServiceFindRequest{
 				Id: new("no-result"),
 			},
 			prepare: func() {
@@ -159,7 +159,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by name",
-			req: &v1.ProjectFindRequest{
+			req: &v1.ProjectServiceFindRequest{
 				Name: new("project-2"),
 			},
 			prepare: func() {
@@ -175,7 +175,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by tenant",
-			req: &v1.ProjectFindRequest{
+			req: &v1.ProjectServiceFindRequest{
 				TenantId: new("tenant-2"),
 			},
 			prepare: func() {
@@ -191,7 +191,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by annotation",
-			req: &v1.ProjectFindRequest{
+			req: &v1.ProjectServiceFindRequest{
 				Annotations: map[string]string{
 					"a": "b",
 				},
@@ -209,7 +209,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by annotation #2",
-			req: &v1.ProjectFindRequest{
+			req: &v1.ProjectServiceFindRequest{
 				Annotations: map[string]string{
 					"a": "b",
 					"c": "d",
@@ -228,7 +228,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by annotation #3",
-			req: &v1.ProjectFindRequest{
+			req: &v1.ProjectServiceFindRequest{
 				Annotations: map[string]string{
 					"c": "d",
 				},
@@ -247,7 +247,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by label",
-			req: &v1.ProjectFindRequest{
+			req: &v1.ProjectServiceFindRequest{
 				Labels: []string{"e"},
 			},
 			prepare: func() {
@@ -263,7 +263,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by label #2",
-			req: &v1.ProjectFindRequest{
+			req: &v1.ProjectServiceFindRequest{
 				Labels: []string{"e", "f"},
 			},
 			prepare: func() {
@@ -279,7 +279,7 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			name: "find by label #3",
-			req: &v1.ProjectFindRequest{
+			req: &v1.ProjectServiceFindRequest{
 				Labels: []string{"f"},
 			},
 			prepare: func() {

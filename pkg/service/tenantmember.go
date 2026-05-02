@@ -26,7 +26,7 @@ func NewTenantMemberService(l *slog.Logger, tds TenantDataStore, tmds TenantMemb
 	}
 }
 
-func (s *tenantMemberService) Create(ctx context.Context, req *v1.TenantMemberCreateRequest) (*v1.TenantMemberResponse, error) {
+func (s *tenantMemberService) Create(ctx context.Context, req *v1.TenantMemberServiceCreateRequest) (*v1.TenantMemberResponse, error) {
 	tenantMember := req.TenantMember
 
 	_, err := s.tenantStore.Get(ctx, tenantMember.GetTenantId())
@@ -47,7 +47,7 @@ func (s *tenantMemberService) Create(ctx context.Context, req *v1.TenantMemberCr
 	return &v1.TenantMemberResponse{TenantMember: tenantMember}, err
 }
 
-func (s *tenantMemberService) Update(ctx context.Context, req *v1.TenantMemberUpdateRequest) (*v1.TenantMemberResponse, error) {
+func (s *tenantMemberService) Update(ctx context.Context, req *v1.TenantMemberServiceUpdateRequest) (*v1.TenantMemberResponse, error) {
 	tenantMember := req.TenantMember
 
 	old, err := s.tenantMemberStore.Get(ctx, tenantMember.Meta.Id)
@@ -70,7 +70,7 @@ func (s *tenantMemberService) Update(ctx context.Context, req *v1.TenantMemberUp
 	return &v1.TenantMemberResponse{TenantMember: tenantMember}, err
 }
 
-func (s *tenantMemberService) Delete(ctx context.Context, req *v1.TenantMemberDeleteRequest) (*v1.TenantMemberResponse, error) {
+func (s *tenantMemberService) Delete(ctx context.Context, req *v1.TenantMemberServiceDeleteRequest) (*v1.TenantMemberResponse, error) {
 	tenantMember := &v1.TenantMember{
 		Meta: &v1.Meta{Id: req.Id},
 	}
@@ -80,7 +80,7 @@ func (s *tenantMemberService) Delete(ctx context.Context, req *v1.TenantMemberDe
 	return &v1.TenantMemberResponse{TenantMember: tenantMember}, err
 }
 
-func (s *tenantMemberService) Get(ctx context.Context, req *v1.TenantMemberGetRequest) (*v1.TenantMemberResponse, error) {
+func (s *tenantMemberService) Get(ctx context.Context, req *v1.TenantMemberServiceGetRequest) (*v1.TenantMemberResponse, error) {
 	tenantMember, err := s.tenantMemberStore.Get(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (s *tenantMemberService) Get(ctx context.Context, req *v1.TenantMemberGetRe
 	return &v1.TenantMemberResponse{TenantMember: tenantMember}, err
 }
 
-func (s *tenantMemberService) Find(ctx context.Context, req *v1.TenantMemberFindRequest) (*v1.TenantMemberListResponse, error) {
+func (s *tenantMemberService) Find(ctx context.Context, req *v1.TenantMemberServiceFindRequest) (*v1.TenantMemberListResponse, error) {
 	filter := map[string]any{
 		"COALESCE(tenantmember ->> 'namespace', '')": req.Namespace,
 	}

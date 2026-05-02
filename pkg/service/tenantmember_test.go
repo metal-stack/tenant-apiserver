@@ -201,13 +201,13 @@ func TestFindTenantMember(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func()
-		req     *v1.TenantMemberFindRequest
+		req     *v1.TenantMemberServiceFindRequest
 		want    *v1.TenantMemberListResponse
 		wantErr error
 	}{
 		{
 			name: "find by tenant",
-			req: &v1.TenantMemberFindRequest{
+			req: &v1.TenantMemberServiceFindRequest{
 				TenantId:  new("tenant-1"),
 				Namespace: "a",
 			},
@@ -229,7 +229,7 @@ func TestFindTenantMember(t *testing.T) {
 		},
 		{
 			name: "find by tenant id (no results) #1",
-			req: &v1.TenantMemberFindRequest{
+			req: &v1.TenantMemberServiceFindRequest{
 				TenantId:  new("no-result"),
 				Namespace: "a",
 			},
@@ -248,7 +248,7 @@ func TestFindTenantMember(t *testing.T) {
 		},
 		{
 			name: "find by tenant id (no results) #2",
-			req: &v1.TenantMemberFindRequest{
+			req: &v1.TenantMemberServiceFindRequest{
 				TenantId:  new("tenant-1"),
 				Namespace: "wrong-namespace",
 			},
@@ -267,7 +267,7 @@ func TestFindTenantMember(t *testing.T) {
 		},
 		{
 			name: "find by tenant",
-			req: &v1.TenantMemberFindRequest{
+			req: &v1.TenantMemberServiceFindRequest{
 				TenantId:  new("tenant-2"),
 				Namespace: "a",
 			},
@@ -288,7 +288,7 @@ func TestFindTenantMember(t *testing.T) {
 		},
 		{
 			name: "find by annotation",
-			req: &v1.TenantMemberFindRequest{
+			req: &v1.TenantMemberServiceFindRequest{
 				Annotations: map[string]string{"role": "owner"},
 				Namespace:   "a",
 			},
@@ -369,13 +369,13 @@ func TestUpdateTenantMember(t *testing.T) {
 	tests := []struct {
 		name    string
 		prepare func()
-		req     *v1.TenantMemberUpdateRequest
+		req     *v1.TenantMemberServiceUpdateRequest
 		want    *v1.TenantMemberResponse
 		wantErr error
 	}{
 		{
 			name: "update mutable fields",
-			req: &v1.TenantMemberUpdateRequest{
+			req: &v1.TenantMemberServiceUpdateRequest{
 				TenantMember: &v1.TenantMember{
 					Meta: &v1.Meta{
 						Id:      "1",
@@ -424,7 +424,7 @@ func TestUpdateTenantMember(t *testing.T) {
 		},
 		{
 			name: "unable to update namespace",
-			req: &v1.TenantMemberUpdateRequest{
+			req: &v1.TenantMemberServiceUpdateRequest{
 				TenantMember: &v1.TenantMember{
 					Meta: &v1.Meta{
 						Id:      "1",
@@ -453,7 +453,7 @@ func TestUpdateTenantMember(t *testing.T) {
 		},
 		{
 			name: "unable to update tenant id",
-			req: &v1.TenantMemberUpdateRequest{
+			req: &v1.TenantMemberServiceUpdateRequest{
 				TenantMember: &v1.TenantMember{
 					Meta: &v1.Meta{
 						Id:      "1",
@@ -482,7 +482,7 @@ func TestUpdateTenantMember(t *testing.T) {
 		},
 		{
 			name: "unable to update member id",
-			req: &v1.TenantMemberUpdateRequest{
+			req: &v1.TenantMemberServiceUpdateRequest{
 				TenantMember: &v1.TenantMember{
 					Meta: &v1.Meta{
 						Id:      "1",

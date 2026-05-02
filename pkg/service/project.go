@@ -30,7 +30,7 @@ func NewProjectService(l *slog.Logger, pds ProjectDataStore, pmds ProjectMemberD
 	}
 }
 
-func (s *projectService) Create(ctx context.Context, req *v1.ProjectCreateRequest) (*v1.ProjectResponse, error) {
+func (s *projectService) Create(ctx context.Context, req *v1.ProjectServiceCreateRequest) (*v1.ProjectResponse, error) {
 	project := req.Project
 
 	_, err := s.tenantStore.Get(ctx, project.GetTenantId())
@@ -48,7 +48,7 @@ func (s *projectService) Create(ctx context.Context, req *v1.ProjectCreateReques
 	err = s.projectStore.Create(ctx, project)
 	return &v1.ProjectResponse{Project: project}, err
 }
-func (s *projectService) Update(ctx context.Context, req *v1.ProjectUpdateRequest) (*v1.ProjectResponse, error) {
+func (s *projectService) Update(ctx context.Context, req *v1.ProjectServiceUpdateRequest) (*v1.ProjectResponse, error) {
 	old, err := s.projectStore.Get(ctx, req.Project.Meta.Id)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (s *projectService) Update(ctx context.Context, req *v1.ProjectUpdateReques
 	err = s.projectStore.Update(ctx, project)
 	return &v1.ProjectResponse{Project: project}, err
 }
-func (s *projectService) Delete(ctx context.Context, req *v1.ProjectDeleteRequest) (*v1.ProjectResponse, error) {
+func (s *projectService) Delete(ctx context.Context, req *v1.ProjectServiceDeleteRequest) (*v1.ProjectResponse, error) {
 	project := &v1.Project{
 		Meta: &v1.Meta{Id: req.Id},
 	}
@@ -89,14 +89,14 @@ func (s *projectService) Delete(ctx context.Context, req *v1.ProjectDeleteReques
 	}
 	return &v1.ProjectResponse{Project: project}, err
 }
-func (s *projectService) Get(ctx context.Context, req *v1.ProjectGetRequest) (*v1.ProjectResponse, error) {
+func (s *projectService) Get(ctx context.Context, req *v1.ProjectServiceGetRequest) (*v1.ProjectResponse, error) {
 	project, err := s.projectStore.Get(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
 	return &v1.ProjectResponse{Project: project}, err
 }
-func (s *projectService) GetHistory(ctx context.Context, req *v1.ProjectGetHistoryRequest) (*v1.ProjectResponse, error) {
+func (s *projectService) GetHistory(ctx context.Context, req *v1.ProjectServiceGetHistoryRequest) (*v1.ProjectResponse, error) {
 	project := &v1.Project{}
 	at := req.At.AsTime()
 	err := s.projectStore.GetHistory(ctx, req.Id, at, project)
@@ -105,7 +105,7 @@ func (s *projectService) GetHistory(ctx context.Context, req *v1.ProjectGetHisto
 	}
 	return &v1.ProjectResponse{Project: project}, err
 }
-func (s *projectService) Find(ctx context.Context, req *v1.ProjectFindRequest) (*v1.ProjectListResponse, error) {
+func (s *projectService) Find(ctx context.Context, req *v1.ProjectServiceFindRequest) (*v1.ProjectListResponse, error) {
 	var filters []any
 
 	mapFilter := make(map[string]any)

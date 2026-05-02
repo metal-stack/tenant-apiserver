@@ -28,7 +28,7 @@ func NewProjectMemberService(l *slog.Logger, pds ProjectDataStore, pmds ProjectM
 	}
 }
 
-func (s *projectMemberService) Create(ctx context.Context, req *v1.ProjectMemberCreateRequest) (*v1.ProjectMemberResponse, error) {
+func (s *projectMemberService) Create(ctx context.Context, req *v1.ProjectMemberServiceCreateRequest) (*v1.ProjectMemberResponse, error) {
 	projectMember := req.ProjectMember
 
 	_, err := s.tenantStore.Get(ctx, projectMember.GetTenantId())
@@ -55,7 +55,7 @@ func (s *projectMemberService) Create(ctx context.Context, req *v1.ProjectMember
 	return &v1.ProjectMemberResponse{ProjectMember: projectMember}, err
 }
 
-func (s *projectMemberService) Update(ctx context.Context, req *v1.ProjectMemberUpdateRequest) (*v1.ProjectMemberResponse, error) {
+func (s *projectMemberService) Update(ctx context.Context, req *v1.ProjectMemberServiceUpdateRequest) (*v1.ProjectMemberResponse, error) {
 	projectMember := req.ProjectMember
 
 	old, err := s.projectMemberStore.Get(ctx, projectMember.Meta.Id)
@@ -78,7 +78,7 @@ func (s *projectMemberService) Update(ctx context.Context, req *v1.ProjectMember
 	return &v1.ProjectMemberResponse{ProjectMember: projectMember}, err
 }
 
-func (s *projectMemberService) Delete(ctx context.Context, req *v1.ProjectMemberDeleteRequest) (*v1.ProjectMemberResponse, error) {
+func (s *projectMemberService) Delete(ctx context.Context, req *v1.ProjectMemberServiceDeleteRequest) (*v1.ProjectMemberResponse, error) {
 	projectMember := &v1.ProjectMember{
 		Meta: &v1.Meta{Id: req.Id},
 	}
@@ -88,7 +88,7 @@ func (s *projectMemberService) Delete(ctx context.Context, req *v1.ProjectMember
 	return &v1.ProjectMemberResponse{ProjectMember: projectMember}, err
 }
 
-func (s *projectMemberService) Get(ctx context.Context, req *v1.ProjectMemberGetRequest) (*v1.ProjectMemberResponse, error) {
+func (s *projectMemberService) Get(ctx context.Context, req *v1.ProjectMemberServiceGetRequest) (*v1.ProjectMemberResponse, error) {
 	projectMember, err := s.projectMemberStore.Get(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func (s *projectMemberService) Get(ctx context.Context, req *v1.ProjectMemberGet
 	return &v1.ProjectMemberResponse{ProjectMember: projectMember}, err
 }
 
-func (s *projectMemberService) Find(ctx context.Context, req *v1.ProjectMemberFindRequest) (*v1.ProjectMemberListResponse, error) {
+func (s *projectMemberService) Find(ctx context.Context, req *v1.ProjectMemberServiceFindRequest) (*v1.ProjectMemberListResponse, error) {
 	filter := map[string]any{
 		"COALESCE(projectmember ->> 'namespace', '')": req.Namespace,
 	}
