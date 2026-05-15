@@ -8,8 +8,6 @@ import (
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type projectMemberService struct {
@@ -33,7 +31,7 @@ func (s *projectMemberService) Create(ctx context.Context, req *v1.ProjectMember
 
 	_, err := s.tenantStore.Get(ctx, projectMember.GetTenantId())
 	if err != nil && errorutil.IsNotFound(err) {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("unable to find tenant:%s for projectMember", projectMember.GetTenantId()))
+		return nil, errorutil.NotFound("unable to find tenant:%s for projectMember", projectMember.GetTenantId())
 	}
 	if err != nil {
 		return nil, err
@@ -41,7 +39,7 @@ func (s *projectMemberService) Create(ctx context.Context, req *v1.ProjectMember
 
 	_, err = s.projectStore.Get(ctx, projectMember.GetProjectId())
 	if err != nil && errorutil.IsNotFound(err) {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("unable to find project:%s for projectMember", projectMember.GetProjectId()))
+		return nil, errorutil.NotFound("unable to find project:%s for projectMember", projectMember.GetProjectId())
 	}
 	if err != nil {
 		return nil, err
@@ -64,13 +62,13 @@ func (s *projectMemberService) Update(ctx context.Context, req *v1.ProjectMember
 	}
 
 	if old.ProjectId != projectMember.ProjectId {
-		return nil, status.Error(codes.InvalidArgument, "updating the project id of a project member is not allowed")
+		return nil, errorutil.InvalidArgument("updating the project id of a project member is not allowed")
 	}
 	if old.TenantId != projectMember.TenantId {
-		return nil, status.Error(codes.InvalidArgument, "updating the tenant id of a project member is not allowed")
+		return nil, errorutil.InvalidArgument("updating the tenant id of a project member is not allowed")
 	}
 	if old.Namespace != projectMember.Namespace {
-		return nil, status.Error(codes.InvalidArgument, "updating the namespace of a project member is not allowed")
+		return nil, errorutil.InvalidArgument("updating the namespace of a project member is not allowed")
 	}
 
 	err = s.projectMemberStore.Update(ctx, projectMember)

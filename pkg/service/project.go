@@ -10,8 +10,6 @@ import (
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type projectService struct {
@@ -35,7 +33,7 @@ func (s *projectService) Create(ctx context.Context, req *v1.ProjectServiceCreat
 
 	_, err := s.tenantStore.Get(ctx, project.GetTenantId())
 	if err != nil && errorutil.IsNotFound(err) {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("unable to find tenant:%s for project", project.GetTenantId()))
+		return nil, errorutil.NotFound("unable to find tenant:%s for project", project.GetTenantId())
 	}
 	if err != nil {
 		return nil, err
@@ -55,7 +53,7 @@ func (s *projectService) Update(ctx context.Context, req *v1.ProjectServiceUpdat
 	}
 	project := req.Project
 	if old.TenantId != project.TenantId {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("update tenant of project:%s is not allowed", project.Meta.Id))
+		return nil, errorutil.InvalidArgument("update tenant of project:%s is not allowed", project.Meta.Id)
 	}
 	err = s.projectStore.Update(ctx, project)
 	return &v1.ProjectServiceUpdateResponse{Project: project}, err
@@ -94,7 +92,7 @@ func (s *projectService) Get(ctx context.Context, req *v1.ProjectServiceGetReque
 	if err != nil {
 		return nil, err
 	}
-	return &v1.ProjectServiceGetResponse{Project: project}, err
+	return &v1.ProjectServiceGetResponse{Project: project}, nil
 }
 func (s *projectService) GetHistory(ctx context.Context, req *v1.ProjectServiceGetHistoryRequest) (*v1.ProjectServiceGetHistoryResponse, error) {
 	project := &v1.Project{}

@@ -22,7 +22,7 @@ import (
 )
 
 // exchangeable for testing
-var Now = time.Now
+var now = time.Now
 
 // datastore is the adapter to talk to the database
 type datastore[E api.Entity] struct {
@@ -284,7 +284,7 @@ func (ds *datastore[E]) Delete(ctx context.Context, id string) error {
 	}
 
 	// insert dataset in history table
-	err = ds.insertHistory(ve, opDelete, Now(), tx)
+	err = ds.insertHistory(ve, opDelete, now(), tx)
 	if err != nil {
 		return err
 	}
@@ -337,7 +337,7 @@ func (ds *datastore[E]) DeleteAll(ctx context.Context, ids ...string) error {
 
 	// insert dataset in history table
 	for _, ve := range ves {
-		err = ds.insertHistory(ve, opDelete, Now(), tx)
+		err = ds.insertHistory(ve, opDelete, now(), tx)
 		if err != nil {
 			return err
 		}
@@ -460,7 +460,7 @@ func (ds *datastore[E]) insertHistory(ve E, op Op, createdAt time.Time, runner s
 
 // pbNow returns the current time as Protobuf and time
 func pbNow() (*timestamppb.Timestamp, time.Time) {
-	now := Now()
+	now := now()
 	nowPb := timestamppb.New(now)
 	return nowPb, now
 }

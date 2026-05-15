@@ -8,8 +8,6 @@ import (
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type tenantMemberService struct {
@@ -31,7 +29,7 @@ func (s *tenantMemberService) Create(ctx context.Context, req *v1.TenantMemberSe
 
 	_, err := s.tenantStore.Get(ctx, tenantMember.GetTenantId())
 	if err != nil && errorutil.IsNotFound(err) {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("unable to find tenant:%s for tenantMember", tenantMember.GetTenantId()))
+		return nil, errorutil.NotFound("unable to find tenant:%s for tenantMember", tenantMember.GetTenantId())
 	}
 	if err != nil {
 		return nil, err
@@ -56,13 +54,13 @@ func (s *tenantMemberService) Update(ctx context.Context, req *v1.TenantMemberSe
 	}
 
 	if old.TenantId != tenantMember.TenantId {
-		return nil, status.Error(codes.InvalidArgument, "updating the tenant id of a tenant member is not allowed")
+		return nil, errorutil.InvalidArgument("updating the tenant id of a tenant member is not allowed")
 	}
 	if old.MemberId != tenantMember.MemberId {
-		return nil, status.Error(codes.InvalidArgument, "updating the member id of a tenant member is not allowed")
+		return nil, errorutil.InvalidArgument("updating the member id of a tenant member is not allowed")
 	}
 	if old.Namespace != tenantMember.Namespace {
-		return nil, status.Error(codes.InvalidArgument, "updating the namespace of a tenant member is not allowed")
+		return nil, errorutil.InvalidArgument("updating the namespace of a tenant member is not allowed")
 	}
 
 	err = s.tenantMemberStore.Update(ctx, tenantMember)

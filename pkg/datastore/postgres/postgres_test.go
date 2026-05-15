@@ -771,14 +771,14 @@ func convertToTime(pbTs *timestamppb.Timestamp) time.Time {
 
 // setNow sets Now
 func setNow(t time.Time) {
-	Now = func() time.Time {
+	now = func() time.Time {
 		return t
 	}
 }
 
 // resetNow resets the overridden Now to time.Now
 func resetNow() {
-	Now = time.Now
+	now = time.Now
 }
 
 func createPostgresConnection() (testcontainers.Container, *sqlx.DB, error) {

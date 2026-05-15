@@ -105,7 +105,7 @@ func (s *tenantService) Get(ctx context.Context, req *v1.TenantServiceGetRequest
 	}
 
 	// response with entity, no error
-	return &v1.TenantServiceGetResponse{Tenant: tenant}, err
+	return &v1.TenantServiceGetResponse{Tenant: tenant}, nil
 }
 
 func (s *tenantService) GetHistory(ctx context.Context, req *v1.TenantServiceGetHistoryRequest) (*v1.TenantServiceGetHistoryResponse, error) {

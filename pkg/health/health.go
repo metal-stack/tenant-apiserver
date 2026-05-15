@@ -5,9 +5,8 @@ import (
 
 	"sync"
 
-	"google.golang.org/grpc/codes"
+	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
 	v1 "google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/status"
 )
 
 // Server represents a Health Check server to check
@@ -71,7 +70,7 @@ func (s *Server) Check(ctx context.Context, in *v1.HealthCheckRequest) (*v1.Heal
 			Status: status,
 		}, nil
 	}
-	return nil, status.Errorf(codes.NotFound, "unknown service")
+	return nil, errorutil.NotFound("unknown service")
 }
 
 func (s *Server) Watch(*v1.HealthCheckRequest, v1.Health_WatchServer) error {

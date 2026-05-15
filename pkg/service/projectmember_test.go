@@ -8,13 +8,12 @@ import (
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"testing"
 
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
+	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
 )
 
 // func TestCreateProjectMember(t *testing.T) {
@@ -481,7 +480,7 @@ func TestUpdateProjectMember(t *testing.T) {
 				}))
 			},
 			want:    nil,
-			wantErr: status.Error(codes.InvalidArgument, "updating the namespace of a project member is not allowed"),
+			wantErr: errorutil.InvalidArgument("updating the namespace of a project member is not allowed"),
 		},
 		{
 			name: "unable to update project",
@@ -510,7 +509,7 @@ func TestUpdateProjectMember(t *testing.T) {
 				}))
 			},
 			want:    nil,
-			wantErr: status.Error(codes.InvalidArgument, "updating the project id of a project member is not allowed"),
+			wantErr: errorutil.InvalidArgument("updating the project id of a project member is not allowed"),
 		},
 		{
 			name: "unable to update tenant",
@@ -539,7 +538,7 @@ func TestUpdateProjectMember(t *testing.T) {
 				}))
 			},
 			want:    nil,
-			wantErr: status.Error(codes.InvalidArgument, "updating the tenant id of a project member is not allowed"),
+			wantErr: errorutil.InvalidArgument("updating the tenant id of a project member is not allowed"),
 		},
 	}
 	for _, tt := range tests {
@@ -554,7 +553,7 @@ func TestUpdateProjectMember(t *testing.T) {
 			}
 
 			got, err := service.Update(ctx, tt.req)
-			if diff := cmp.Diff(err, tt.wantErr, cmpopts.EquateErrors()); diff != "" {
+			if diff := cmp.Diff(err, tt.wantErr, errorutil.ConnectErrorComparer()); diff != "" {
 				t.Errorf("(-want +got):\n%s", diff)
 				return
 			}
