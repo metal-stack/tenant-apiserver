@@ -24,7 +24,7 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "http-server-endpoint",
-				Value:   "localhost:8081",
+				Value:   "0.0.0.0:8080",
 				Usage:   "http server endpoint",
 				Sources: cli.EnvVars("TENANT_APISERVER_GRPC_SERVER_ENDPOINT"),
 			},

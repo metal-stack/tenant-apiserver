@@ -142,9 +142,11 @@ func (s *server) Run() error {
 	server := http.Server{
 		Addr:              s.c.HttpServerEndpoint,
 		ReadHeaderTimeout: 1 * time.Minute,
+		Handler:           mux,
 	}
 	server.Protocols = new(http.Protocols)
 	server.Protocols.SetHTTP1(true)
+	server.Protocols.SetHTTP2(true)
 	// For gRPC clients, it's convenient to support HTTP/2 without TLS
 	server.Protocols.SetUnencryptedHTTP2(true)
 
@@ -157,19 +159,30 @@ func newLoggingInterceptor(log *slog.Logger) connect.UnaryInterceptorFunc {
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
 		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 			var (
-				procedure = req.Spec().Procedure
-				request   = req.Any()
+				log   = log.With("procedure", req.Spec().Procedure)
+				debug = log.Enabled(ctx, slog.LevelDebug)
+				start = time.Now()
 			)
-			if procedure == apiv1connect.VersionServiceGetProcedure {
+
+			if debug {
+				log = log.With("request", req.Any())
+			}
+
+			if req.Spec().Procedure == apiv1connect.VersionServiceGetProcedure {
 				return next(ctx, req)
 			}
-			log.Debug("call", "proc", procedure, "req", request)
+			log.Info("handling unary call")
 
 			response, err := next(ctx, req)
+
+			if debug && response != nil {
+				log = log.With("response", response.Any())
+			}
+
 			if err != nil {
-				log.Error("call", "proc", procedure, "error", err)
-			} else {
-				log.Debug("call", "proc", procedure, "req", request, "resp", response.Any())
+				log.Error("error during unary call", "error", err)
+			} else if debug {
+				log.Debug("handled call successfully", "duration", time.Since(start).String())
 			}
 
 			return response, err
