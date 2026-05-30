@@ -2,8 +2,6 @@ module github.com/metal-stack/tenant-apiserver
 
 go 1.26.2
 
-replace github.com/metal-stack/tenant-api => ../tenant-api
-
 require (
 	connectrpc.com/connect v1.20.0
 	connectrpc.com/grpchealth v1.4.0
@@ -15,7 +13,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.12.3
 	github.com/lopezator/migrator v0.3.1
-	github.com/metal-stack/tenant-api v0.0.0-00010101000000-000000000000
+	github.com/metal-stack/tenant-api v0.0.0-20260530150328-8cc73f1cc041
 	github.com/metal-stack/v v1.0.3
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
@@ -73,7 +71,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.5 // indirect
+	github.com/prometheus/common v0.68.0 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.4 // indirect
