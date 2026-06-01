@@ -13,7 +13,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.12.3
 	github.com/lopezator/migrator v0.3.1
-	github.com/metal-stack/tenant-api v0.0.0-20260530150328-8cc73f1cc041
+	github.com/metal-stack/tenant-api v0.1.0
 	github.com/metal-stack/v v1.0.3
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
