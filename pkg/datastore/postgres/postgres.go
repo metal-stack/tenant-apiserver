@@ -90,8 +90,11 @@ func (ds *datastore[E]) Create(ctx context.Context, ve E) error {
 	}
 	id := meta.GetId()
 	if id == "" {
-		id = uuid.NewString()
-		meta.Id = id
+		id, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+		meta.Id = id.String()
 	}
 	kind := meta.GetKind()
 	if kind == "" {
