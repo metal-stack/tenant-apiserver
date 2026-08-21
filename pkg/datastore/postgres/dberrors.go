@@ -7,7 +7,6 @@ import (
 	"github.com/lib/pq/pqerror"
 )
 
-
 const (
 	// UniqueViolationError is raised if the unique constraint is violated
 	UniqueViolationError = pqerror.Code("23505") // 'unique_violation'
