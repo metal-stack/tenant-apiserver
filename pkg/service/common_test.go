@@ -29,16 +29,14 @@ var (
 func startPostgres(ctx context.Context, ves ...api.Entity) (testcontainers.Container, *sqlx.DB, error) {
 	var err error
 	pgContainer, err = testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: testcontainers.ContainerRequest{
-			Image:        "postgres:18-alpine",
-			ExposedPorts: []string{"5432/tcp"},
-			Env:          map[string]string{"POSTGRES_PASSWORD": "password"},
-			WaitingFor: wait.ForAll(
-				wait.ForLog("database system is ready to accept connections"),
-				wait.ForListeningPort("5432/tcp"),
-			),
-			Cmd: []string{"postgres", "-c", "max_connections=200"},
-		},
+		Image:        "postgres:18-alpine",
+		ExposedPorts: []string{"5432/tcp"},
+		Env:          map[string]string{"POSTGRES_PASSWORD": "password"},
+		WaitingFor: wait.ForAll(
+			wait.ForLog("database system is ready to accept connections"),
+			wait.ForListeningPort("5432/tcp"),
+		),
+		Cmd:     []string{"postgres", "-c", "max_connections=200"},
 		Started: true,
 	})
 	if err != nil {

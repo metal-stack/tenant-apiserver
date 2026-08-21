@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +45,7 @@ func BenchmarkCreateTenant(b *testing.B) {
 	for b.Loop() {
 		err := ds.Create(b.Context(), &v1.Tenant{
 			Meta: &v1.Meta{
-				Id: uuid.NewString(),
+				Id: uuid.NewV7().String(),
 			},
 		})
 		require.NoError(b, err)

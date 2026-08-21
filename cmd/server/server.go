@@ -143,8 +143,8 @@ func (s *server) Run() error {
 		Addr:              s.c.HttpServerEndpoint,
 		ReadHeaderTimeout: 1 * time.Minute,
 		Handler:           mux,
-	}
-	server.Protocols = new(http.Protocols)
+
+		Protocols: new(http.Protocols)}
 	server.Protocols.SetHTTP1(true)
 	server.Protocols.SetHTTP2(true)
 	// For gRPC clients, it's convenient to support HTTP/2 without TLS

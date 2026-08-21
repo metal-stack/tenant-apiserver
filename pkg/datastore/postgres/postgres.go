@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"log/slog"
 	"time"
+	"uuid"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
@@ -90,7 +90,7 @@ func (ds *datastore[E]) Create(ctx context.Context, ve E) error {
 	}
 	id := meta.GetId()
 	if id == "" {
-		id = uuid.NewString()
+		id = uuid.NewV7().String()
 		meta.Id = id
 	}
 	kind := meta.GetKind()
