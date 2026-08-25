@@ -4,15 +4,10 @@ import (
 	"log/slog"
 	"testing"
 
+	"github.com/metal-stack/tenant-apiserver/test/config"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	testpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
-)
-
-var (
-	dbName     = "postgres"
-	dbUser     = "postgres"
-	dbPassword = "password"
 )
 
 func StartPostgresContainer(log *slog.Logger, t testing.TB) testcontainers.Container {
@@ -22,9 +17,9 @@ func StartPostgresContainer(log *slog.Logger, t testing.TB) testcontainers.Conta
 
 	pgContainer, err := testpostgres.Run(ctx,
 		"postgres:18-alpine",
-		testpostgres.WithDatabase(dbName),
-		testpostgres.WithUsername(dbUser),
-		testpostgres.WithPassword(dbPassword),
+		testpostgres.WithDatabase(config.DBName),
+		testpostgres.WithUsername(config.DBUser),
+		testpostgres.WithPassword(config.DBPassword),
 		testcontainers.WithTmpfs(map[string]string{"/var/lib/postgresql": "rw"}),
 		testpostgres.BasicWaitStrategies(),
 	)
