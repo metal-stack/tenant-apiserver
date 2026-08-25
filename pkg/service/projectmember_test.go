@@ -1,6 +1,8 @@
 package service
 
 import (
+	"log/slog"
+	"os"
 	"slices"
 
 	"github.com/google/go-cmp/cmp"
@@ -14,90 +16,8 @@ import (
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
+	"github.com/metal-stack/tenant-apiserver/test/pg"
 )
-
-// func TestCreateProjectMember(t *testing.T) {
-// 	storageMock := mocks.NewMockStorage[*v1.ProjectMember](t)
-// 	tenantStorageMock := mocks.NewMockStorage[*v1.Tenant](t)
-// 	projectStorageMock := mocks.NewMockStorage[*v1.Project](t)
-// 	ts := &projectMemberService{
-// 		projectMemberStore: storageMock,
-// 		tenantStore:        tenantStorageMock,
-// 		projectStore:       projectStorageMock,
-// 		log:                slog.Default(),
-// 	}
-// 	ctx := context.Background()
-
-// 	t1 := &v1.Tenant{}
-// 	p1 := &v1.Project{}
-// 	pm1 := &v1.ProjectMember{
-// 		ProjectId: "p1",
-// 		TenantId:  "t1",
-// 	}
-// 	pmcr := &v1.ProjectMemberCreateRequest{
-// 		ProjectMember: pm1,
-// 	}
-// 	tenantStorageMock.On("Get", ctx, pm1.GetTenantId()).Return(t1, nil)
-// 	projectStorageMock.On("Get", ctx, pm1.GetProjectId()).Return(p1, nil)
-// 	storageMock.On("Create", ctx, pm1).Return(nil)
-// 	resp, err := ts.Create(ctx, pmcr)
-// 	require.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.NotNil(t, resp.ProjectMember)
-// 	assert.Equal(t, pmcr.ProjectMember.ProjectId, resp.ProjectMember.GetProjectId())
-// }
-
-// func TestDeleteProjectMember(t *testing.T) {
-// 	storageMock := mocks.NewMockStorage[*v1.ProjectMember](t)
-// 	tenantStorageMock := mocks.NewMockStorage[*v1.Tenant](t)
-// 	projectStorageMock := mocks.NewMockStorage[*v1.Project](t)
-// 	ts := &projectMemberService{
-// 		projectMemberStore: storageMock,
-// 		tenantStore:        tenantStorageMock,
-// 		projectStore:       projectStorageMock,
-// 		log:                slog.Default(),
-// 	}
-// 	ctx := context.Background()
-// 	t3 := &v1.ProjectMember{
-// 		Meta: &v1.Meta{Id: "p3"},
-// 	}
-// 	tdr := &v1.ProjectMemberDeleteRequest{
-// 		Id: "p3",
-// 	}
-
-// 	storageMock.On("Delete", ctx, t3.Meta.Id).Return(nil)
-// 	resp, err := ts.Delete(ctx, tdr)
-// 	require.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.NotNil(t, resp.ProjectMember)
-// 	assert.Equal(t, tdr.Id, resp.ProjectMember.GetMeta().GetId())
-// }
-
-// func TestGetProjectMember(t *testing.T) {
-// 	storageMock := mocks.NewMockStorage[*v1.ProjectMember](t)
-// 	tenantStorageMock := mocks.NewMockStorage[*v1.Tenant](t)
-// 	projectStorageMock := mocks.NewMockStorage[*v1.Project](t)
-// 	ts := &projectMemberService{
-// 		projectMemberStore: storageMock,
-// 		tenantStore:        tenantStorageMock,
-// 		projectStore:       projectStorageMock,
-// 		log:                slog.Default(),
-// 	}
-// 	ctx := context.Background()
-// 	t4 := &v1.ProjectMember{
-// 		Meta: &v1.Meta{Id: "p4"},
-// 	}
-// 	tgr := &v1.ProjectMemberGetRequest{
-// 		Id: "p4",
-// 	}
-
-// 	storageMock.On("Get", ctx, "p4").Return(t4, nil)
-// 	resp, err := ts.Get(ctx, tgr)
-// 	require.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.NotNil(t, resp.ProjectMember)
-// 	assert.Equal(t, tgr.Id, resp.ProjectMember.GetMeta().GetId())
-// }
 
 func TestFindProjectMember(t *testing.T) {
 	ctx := t.Context()
@@ -108,8 +28,8 @@ func TestFindProjectMember(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := startPostgres(ctx, ves...)
-	require.NoError(t, err)
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := pg.StartPostgres(log, t, ves...)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -377,8 +297,8 @@ func TestUpdateProjectMember(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := startPostgres(ctx, ves...)
-	require.NoError(t, err)
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := pg.StartPostgres(log, t, ves...)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))

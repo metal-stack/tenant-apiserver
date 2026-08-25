@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"log/slog"
 	"os"
 	"slices"
@@ -15,146 +14,8 @@ import (
 
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
+	"github.com/metal-stack/tenant-apiserver/test/pg"
 )
-
-var log *slog.Logger
-
-func TestMain(m *testing.M) {
-	code := 0
-	defer func() {
-		os.Exit(code)
-	}()
-	log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	code = m.Run()
-}
-
-// func TestCreateTenant(t *testing.T) {
-// 	storageMock := mocks.NewMockStorage[*v1.Tenant](t)
-// 	ts := &tenantService{
-// 		tenantStore: storageMock,
-// 		log:         slog.Default(),
-// 	}
-// 	ctx := context.Background()
-
-// 	t1 := &v1.Tenant{
-// 		Name:        "First",
-// 		Description: "First Tenant",
-// 		Meta: &v1.Meta{
-// 			Annotations: map[string]string{
-// 				"metal-stack.io/contract": "2345",
-// 			},
-// 			Labels: []string{
-// 				"color=blue",
-// 			},
-// 		},
-// 	}
-// 	tcr := &v1.TenantCreateRequest{
-// 		Tenant: t1,
-// 	}
-
-// 	storageMock.On("Create", ctx, t1).Return(nil)
-// 	resp, err := ts.Create(ctx, tcr)
-// 	require.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.NotNil(t, resp.Tenant)
-// 	assert.Equal(t, tcr.Tenant.GetName(), resp.Tenant.GetName())
-// }
-
-// func TestUpdateTenant(t *testing.T) {
-// 	storageMock := mocks.NewMockStorage[*v1.Tenant](t)
-// 	ts := &tenantService{
-// 		tenantStore: storageMock,
-// 		log:         slog.Default(),
-// 	}
-// 	ctx := context.Background()
-
-// 	t1 := &v1.Tenant{
-// 		Name:        "Second",
-// 		Description: "Second Tenant",
-// 	}
-// 	tur := &v1.TenantUpdateRequest{
-// 		Tenant: t1,
-// 	}
-
-// 	storageMock.On("Update", ctx, t1).Return(nil)
-// 	resp, err := ts.Update(ctx, tur)
-// 	require.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.NotNil(t, resp.Tenant)
-// 	assert.Equal(t, tur.Tenant.GetName(), resp.Tenant.GetName())
-// }
-
-// func TestDeleteTenant(t *testing.T) {
-// 	storageMock := mocks.NewMockStorage[*v1.Tenant](t)
-// 	memberStorageMock := mocks.NewMockStorage[*v1.TenantMember](t)
-// 	ts := &tenantService{
-// 		tenantStore:       storageMock,
-// 		tenantMemberStore: memberStorageMock,
-// 		log:               slog.Default(),
-// 	}
-// 	ctx := context.Background()
-// 	t3 := &v1.Tenant{
-// 		Meta: &v1.Meta{Id: "t3"},
-// 	}
-// 	tdr := &v1.TenantDeleteRequest{
-// 		Id: "t3",
-// 	}
-// 	tfilter := map[string]any{
-// 		"tenantmember ->> 'tenant_id'": t3.Meta.Id,
-// 	}
-// 	mfilter := map[string]any{
-// 		"tenantmember ->> 'member_id'": t3.Meta.Id,
-// 	}
-// 	var paging *v1.Paging
-
-// 	storageMock.On("Delete", ctx, t3.Meta.Id).Return(nil)
-// 	memberStorageMock.On("Find", ctx, paging, []any{tfilter}).Return([]*v1.TenantMember{
-// 		{
-// 			Meta: &v1.Meta{
-// 				Id: "t3",
-// 			},
-// 			TenantId: t3.Meta.Id,
-// 			MemberId: t3.Meta.Id,
-// 		},
-// 	}, nil, nil)
-// 	memberStorageMock.On("Find", ctx, paging, []any{mfilter}).Return([]*v1.TenantMember{
-// 		{
-// 			Meta: &v1.Meta{
-// 				Id: "t3",
-// 			},
-// 			TenantId: t3.Meta.Id,
-// 			MemberId: t3.Meta.Id,
-// 		},
-// 	}, nil, nil)
-// 	memberStorageMock.On("DeleteAll", ctx, []string{"t3"}).Return(nil)
-// 	resp, err := ts.Delete(ctx, tdr)
-// 	require.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.NotNil(t, resp.Tenant)
-// 	assert.Equal(t, tdr.Id, resp.Tenant.GetMeta().GetId())
-// }
-
-// func TestGetTenant(t *testing.T) {
-// 	storageMock := mocks.NewMockStorage[*v1.Tenant](t)
-// 	ts := &tenantService{
-// 		tenantStore: storageMock,
-// 		log:         slog.Default(),
-// 	}
-// 	ctx := context.Background()
-// 	t4 := &v1.Tenant{
-// 		Meta: &v1.Meta{Id: "t4"},
-// 	}
-// 	tgr := &v1.TenantGetRequest{
-// 		Id: "t4",
-// 	}
-
-// 	storageMock.On("Get", ctx, "t4").Return(t4, nil)
-// 	resp, err := ts.Get(ctx, tgr)
-// 	require.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.NotNil(t, resp.Tenant)
-// 	assert.Equal(t, tgr.Id, resp.Tenant.GetMeta().GetId())
-// }
 
 func TestFindTenant(t *testing.T) {
 	ctx := t.Context()
@@ -165,8 +26,8 @@ func TestFindTenant(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := startPostgres(ctx, ves...)
-	require.NoError(t, err)
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := pg.StartPostgres(log, t, ves...)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -403,7 +264,7 @@ func TestFindTenant(t *testing.T) {
 }
 
 func Test_tenantService_FindParticipatingProjects(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	ves := []api.Entity{
 		&v1.Project{},
 		&v1.ProjectMember{},
@@ -411,8 +272,8 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := startPostgres(ctx, ves...)
-	require.NoError(t, err)
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := pg.StartPostgres(log, t, ves...)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -420,7 +281,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 
 	s := &tenantService{
 		db:  db,
-		log: slog.Default(),
+		log: log,
 	}
 
 	var (
@@ -703,7 +564,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 }
 
 func Test_tenantService_FindParticipatingTenants(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	ves := []api.Entity{
 		&v1.Project{},
 		&v1.ProjectMember{},
@@ -711,8 +572,8 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := startPostgres(ctx, ves...)
-	require.NoError(t, err)
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := pg.StartPostgres(log, t, ves...)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -720,7 +581,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 
 	s := &tenantService{
 		db:  db,
-		log: slog.Default(),
+		log: log,
 	}
 
 	var (
@@ -764,7 +625,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 				require.NoError(t, err)
 			},
 			want:    &v1.TenantServiceFindParticipatingTenantsResponse{},
-			wantErr: err,
+			wantErr: nil,
 		},
 		{
 			name: "direct membership",
@@ -987,16 +848,16 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 }
 
 func Test_tenantService_ListTenantMembers(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	ves := []api.Entity{
 		&v1.Project{},
 		&v1.ProjectMember{},
 		&v1.Tenant{},
 		&v1.TenantMember{},
 	}
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := pg.StartPostgres(log, t, ves...)
 
-	container, db, err := startPostgres(ctx, ves...)
-	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -1004,7 +865,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 
 	s := &tenantService{
 		db:  db,
-		log: slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})),
+		log: log,
 	}
 
 	var (
@@ -1030,7 +891,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 			prepare: func() {
 			},
 			want:    &v1.TenantServiceListTenantMembersResponse{},
-			wantErr: err,
+			wantErr: nil,
 		},
 		{
 			name: "ignore foreign members",
@@ -1049,7 +910,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 				require.NoError(t, err)
 			},
 			want:    &v1.TenantServiceListTenantMembersResponse{},
-			wantErr: err,
+			wantErr: nil,
 		},
 		{
 			name: "direct membership",

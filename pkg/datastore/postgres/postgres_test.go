@@ -5,61 +5,31 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"runtime/debug"
 	"testing"
 	"time"
 
-	"github.com/jmoiron/sqlx"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
-
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
 
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
+	"github.com/metal-stack/tenant-apiserver/test"
+	"github.com/metal-stack/tenant-apiserver/test/config"
 	"github.com/stretchr/testify/assert"
 )
 
-var db *sqlx.DB
-
-func TestMain(m *testing.M) {
-	code := 0
-	defer func() {
-		os.Exit(code)
-	}()
-
-	// used to debug race condition in this method
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("Recovered from ", r)
-			fmt.Println(string(debug.Stack()))
-		}
-	}()
-
-	var (
-		err error
-		c   testcontainers.Container
-	)
-	c, db, err = createPostgresConnection()
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		err = c.Stop(context.Background(), new(3*time.Second))
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	code = m.Run()
-}
-
 func TestCRUD(t *testing.T) {
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(t.Context()))
+	}()
+	tenantDS := New(log, db, &v1.Tenant{})
 	assert.NotNil(t, tenantDS, "Datastore must not be nil")
 	ctx := t.Context()
 	tcr := &v1.Tenant{
@@ -139,7 +109,14 @@ func TestCRUD(t *testing.T) {
 }
 
 func TestUpdateOptimisticLock(t *testing.T) {
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(t.Context()))
+	}()
+
+	tenantDS := New(log, db, &v1.Tenant{})
 	assert.NotNil(t, tenantDS, "Datastore must not be nil")
 	ctx := t.Context()
 	tcr := &v1.Tenant{
@@ -183,8 +160,14 @@ func TestUpdateOptimisticLock(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(t.Context()))
+	}()
 	const t1 = "t1"
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+	tenantDS := New(log, db, &v1.Tenant{})
 	assert.NotNil(t, tenantDS, "Datastore must not be nil")
 	ctx := t.Context()
 
@@ -273,8 +256,14 @@ func TestCreate(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(t.Context()))
+	}()
 	const t3 = "t3"
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+	tenantDS := New(log, db, &v1.Tenant{})
 	assert.NotNil(t, tenantDS, "Datastore must not be nil")
 	ctx := t.Context()
 
@@ -314,7 +303,7 @@ func TestUpdate(t *testing.T) {
 	assert.Equal(t, "C Tenant", tcr1.GetDescription())
 
 	tc := time.Now()
-	checkHistory(ctx, t, t3, tc, "ctenant", "C Tenant")
+	checkHistory(ctx, t, db, t3, tc, "ctenant", "C Tenant")
 
 	// now update existing
 	tcr1.Description = "C Tenant 3"
@@ -325,8 +314,8 @@ func TestUpdate(t *testing.T) {
 	assert.Equal(t, "C Tenant 3", tcr1.GetDescription())
 
 	tu := time.Now()
-	checkHistory(ctx, t, t3, tc, "ctenant", "C Tenant")
-	checkHistory(ctx, t, t3, tu, "ctenant", "C Tenant 3")
+	checkHistory(ctx, t, db, t3, tc, "ctenant", "C Tenant")
+	checkHistory(ctx, t, db, t3, tu, "ctenant", "C Tenant 3")
 
 	// try update with wrong kind
 	tcr1.Meta.Kind = "WrongKind"
@@ -341,12 +330,12 @@ func TestUpdate(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, err, errorutil.InvalidArgument("update of type:tenant failed, apiversion must be set to:v1"))
 
-	checkHistory(ctx, t, t3, time.Now(), "ctenant", "C Tenant 3")
+	checkHistory(ctx, t, db, t3, time.Now(), "ctenant", "C Tenant 3")
 }
 
-//nolint:unparam
-func checkHistoryCreated(ctx context.Context, t *testing.T, id string, name string, desc string) {
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+func checkHistoryCreated(ctx context.Context, t *testing.T, db *sqlx.DB, id string, name string, desc string) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	tenantDS := New(log, db, &v1.Tenant{})
 	var tgrhc v1.Tenant
 	err := tenantDS.GetHistoryCreated(ctx, id, &tgrhc)
 	require.NoError(t, err)
@@ -354,8 +343,10 @@ func checkHistoryCreated(ctx context.Context, t *testing.T, id string, name stri
 	assert.Equal(t, desc, tgrhc.GetDescription())
 }
 
-func checkHistory(ctx context.Context, t *testing.T, id string, tm time.Time, name string, desc string) {
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+func checkHistory(ctx context.Context, t *testing.T, db *sqlx.DB, id string, tm time.Time, name string, desc string) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	tenantDS := New(log, db, &v1.Tenant{})
 	var tgrh v1.Tenant
 	err := tenantDS.GetHistory(ctx, id, tm, &tgrh)
 	require.NoError(t, err)
@@ -364,8 +355,14 @@ func checkHistory(ctx context.Context, t *testing.T, id string, tm time.Time, na
 }
 
 func TestGet(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(t.Context()))
+	}()
 	const t4 = "t4"
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+	tenantDS := New(log, db, &v1.Tenant{})
 	assert.NotNil(t, tenantDS, "Datastore must not be nil")
 	ctx := t.Context()
 	// unknown id
@@ -394,8 +391,14 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetHistory(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(t.Context()))
+	}()
 	const t5 = "t5"
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+	tenantDS := New(log, db, &v1.Tenant{})
 	assert.NotNil(t, tenantDS, "Datastore must not be nil")
 	ctx := t.Context()
 
@@ -434,8 +437,8 @@ func TestGetHistory(t *testing.T) {
 	err = tenantDS.Create(ctx, tcr1)
 	require.NoError(t, err)
 
-	checkHistoryCreated(ctx, t, t5, "dtenant", "D Tenant")
-	checkHistory(ctx, t, t5, createTS, "dtenant", "D Tenant")
+	checkHistoryCreated(ctx, t, db, t5, "dtenant", "D Tenant")
+	checkHistory(ctx, t, db, t5, createTS, "dtenant", "D Tenant")
 
 	tcrU, err := tenantDS.Get(ctx, t5)
 	require.NoError(t, err)
@@ -448,8 +451,8 @@ func TestGetHistory(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, updateTS, convertToTime(tcrU.Meta.UpdatedTime))
 
-	checkHistoryCreated(ctx, t, t5, "dtenant", "D Tenant")
-	checkHistory(ctx, t, t5, updateTS, "dtenant updated", "D Tenant")
+	checkHistoryCreated(ctx, t, db, t5, "dtenant", "D Tenant")
+	checkHistory(ctx, t, db, t5, updateTS, "dtenant updated", "D Tenant")
 
 	update2TS := time.Date(2020, 4, 30, 21, 0, 0, 0, time.UTC)
 	setNow(update2TS)
@@ -458,16 +461,16 @@ func TestGetHistory(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, update2TS, convertToTime(tcrU.Meta.UpdatedTime))
 
-	checkHistoryCreated(ctx, t, t5, "dtenant", "D Tenant")
-	checkHistory(ctx, t, t5, update2TS, "dtenant updated 2", "D Tenant")
+	checkHistoryCreated(ctx, t, db, t5, "dtenant", "D Tenant")
+	checkHistory(ctx, t, db, t5, update2TS, "dtenant updated 2", "D Tenant")
 
 	deletedTS := time.Date(2020, 4, 30, 22, 0, 0, 0, time.UTC)
 	setNow(deletedTS)
 	err = tenantDS.Delete(ctx, tcr1.Meta.Id)
 	require.NoError(t, err)
 
-	checkHistoryCreated(ctx, t, t5, "dtenant", "D Tenant")
-	checkHistory(ctx, t, t5, deletedTS, "dtenant updated 2", "D Tenant")
+	checkHistoryCreated(ctx, t, db, t5, "dtenant", "D Tenant")
+	checkHistory(ctx, t, db, t5, deletedTS, "dtenant updated 2", "D Tenant")
 
 	// Check complete history
 	// before create
@@ -475,17 +478,23 @@ func TestGetHistory(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, err, errorutil.NotFound("entity of type:tenant with predicate:[map[id:t5] map[created_at:2019-01-01 08:00:00 +0000 UTC]] not found"))
 
-	checkHistoryCreated(ctx, t, t5, "dtenant", "D Tenant")
-	checkHistory(ctx, t, t5, createTS, "dtenant", "D Tenant")
-	checkHistory(ctx, t, t5, updateTS, "dtenant updated", "D Tenant")
-	checkHistory(ctx, t, t5, update2TS, "dtenant updated 2", "D Tenant")
-	checkHistory(ctx, t, t5, deletedTS, "dtenant updated 2", "D Tenant")
-	checkHistory(ctx, t, t5, time.Date(2021, 1, 1, 8, 0, 0, 0, time.UTC), "dtenant updated 2", "D Tenant")
+	checkHistoryCreated(ctx, t, db, t5, "dtenant", "D Tenant")
+	checkHistory(ctx, t, db, t5, createTS, "dtenant", "D Tenant")
+	checkHistory(ctx, t, db, t5, updateTS, "dtenant updated", "D Tenant")
+	checkHistory(ctx, t, db, t5, update2TS, "dtenant updated 2", "D Tenant")
+	checkHistory(ctx, t, db, t5, deletedTS, "dtenant updated 2", "D Tenant")
+	checkHistory(ctx, t, db, t5, time.Date(2021, 1, 1, 8, 0, 0, 0, time.UTC), "dtenant updated 2", "D Tenant")
 }
 
 func TestFind(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(t.Context()))
+	}()
 	const t6 = "t6"
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+	tenantDS := New(log, db, &v1.Tenant{})
 	assert.NotNil(t, tenantDS, "Datastore must not be nil")
 	ctx := t.Context()
 
@@ -551,7 +560,13 @@ func TestFind(t *testing.T) {
 }
 
 func TestFindWithPaging(t *testing.T) {
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(t.Context()))
+	}()
+	tenantDS := New(log, db, &v1.Tenant{})
 	// prevent side effects
 	db.MustExec("DELETE from tenants")
 	assert.NotNil(t, tenantDS, "Datastore must not be nil")
@@ -590,8 +605,14 @@ func TestFindWithPaging(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(t.Context()))
+	}()
 	const t9 = "t9"
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+	tenantDS := New(log, db, &v1.Tenant{})
 	assert.NotNil(t, tenantDS, "Datastore must not be nil")
 	ctx := t.Context()
 
@@ -633,11 +654,18 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDeleteAll(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(t.Context()))
+	}()
+
 	const (
 		t11 = "t11"
 		t10 = "t10"
 	)
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+	tenantDS := New(log, db, &v1.Tenant{})
 	assert.NotNil(t, tenantDS, "Datastore must not be nil")
 	ctx := t.Context()
 
@@ -696,7 +724,13 @@ func TestDeleteAll(t *testing.T) {
 }
 
 func TestAnnotationsAndLabels(t *testing.T) {
-	tenantDS := New(slog.Default(), db, &v1.Tenant{})
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(t.Context()))
+	}()
+	tenantDS := New(log, db, &v1.Tenant{})
 	assert.NotNil(t, tenantDS, "Datastore must not be nil")
 	ctx := t.Context()
 	tcr := &v1.Tenant{
@@ -781,48 +815,25 @@ func resetNow() {
 	now = time.Now
 }
 
-func createPostgresConnection() (testcontainers.Container, *sqlx.DB, error) {
+func startPostgres(log *slog.Logger, t testing.TB) (testcontainers.Container, *sqlx.DB) {
+	ctx := t.Context()
+	pgContainer := test.StartPostgresContainer(log, t)
 
-	ctx := context.Background()
+	ip, err := pgContainer.Host(ctx)
+	require.NoError(t, err)
 
-	postgres, err := postgres.Run(ctx,
-		"postgres:18-alpine",
-		postgres.WithPassword("password"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).
-				WithStartupTimeout(5*time.Second)),
-	)
-	if err != nil {
-		return nil, nil, err
-	}
+	port, err := pgContainer.MappedPort(ctx, "5432")
+	require.NoError(t, err)
 
-	ip, err := postgres.Host(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-	port, err := postgres.MappedPort(ctx, "5432/tcp")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	log := slog.Default()
-	var db *sqlx.DB
-	for {
-		var err error
-		ves := []api.Entity{
+	var (
+		ves = []api.Entity{
 			&v1.Project{},
 			&v1.Tenant{},
 		}
-		db, err = NewPostgresDB(log, ip, port.Port(), "postgres", "password", "postgres", "disable", ves...)
-		if err != nil {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-		err = db.Ping()
-		if err == nil {
-			break
-		}
-	}
-	return postgres, db, nil
+	)
+
+	db, err := NewPostgresDB(log, ip, port.Port(), config.DBUser, config.DBPassword, config.DBName, "disable", ves...)
+	require.NoError(t, err)
+
+	return pgContainer, db
 }

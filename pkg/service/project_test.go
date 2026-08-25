@@ -1,6 +1,8 @@
 package service
 
 import (
+	"log/slog"
+	"os"
 	"slices"
 
 	"github.com/google/go-cmp/cmp"
@@ -15,10 +17,12 @@ import (
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
+	"github.com/metal-stack/tenant-apiserver/test/pg"
 )
 
 func TestCreateGetUpdateDeleteProject(t *testing.T) {
 	ctx := t.Context()
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	client, closer := startTenantApiserverWithPostgres(t, log)
 	defer closer()
 
@@ -72,8 +76,8 @@ func TestFindProject(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := startPostgres(ctx, ves...)
-	require.NoError(t, err)
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := pg.StartPostgres(log, t, ves...)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))

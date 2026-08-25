@@ -104,12 +104,12 @@ func (m *memoryDatastore[E]) Get(ctx context.Context, id string) (E, error) {
 
 // GetHistory implements Storage.
 func (m *memoryDatastore[E]) GetHistory(ctx context.Context, id string, at time.Time, ve E) error {
-	panic("unimplemented")
+	return fmt.Errorf("gethistory is not implemented in the memory backend")
 }
 
 // GetHistoryCreated implements Storage.
 func (m *memoryDatastore[E]) GetHistoryCreated(ctx context.Context, id string, ve E) error {
-	panic("unimplemented")
+	return fmt.Errorf("gethistorycreated is not implemented in the memory backend")
 }
 
 // Update implements Storage.
