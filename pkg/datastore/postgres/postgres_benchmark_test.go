@@ -3,25 +3,23 @@ package postgres
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"testing"
 	"uuid"
 
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
-	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var (
-	ds api.Storage[*v1.Tenant]
-)
-
-func init() {
-	_, db, _ = createPostgresConnection()
-	ds = New(slog.Default(), db, &v1.Tenant{})
-}
-
 func BenchmarkGetTenant(b *testing.B) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, b)
+	defer func() {
+		require.NoError(b, db.Close())
+		require.NoError(b, container.Terminate(b.Context()))
+	}()
+	ds := New(log, db, &v1.Tenant{})
 
 	t1 := &v1.Tenant{
 		Meta: &v1.Meta{
@@ -42,6 +40,13 @@ func BenchmarkGetTenant(b *testing.B) {
 }
 
 func BenchmarkCreateTenant(b *testing.B) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, b)
+	defer func() {
+		require.NoError(b, db.Close())
+		require.NoError(b, container.Terminate(b.Context()))
+	}()
+	ds := New(log, db, &v1.Tenant{})
 	for b.Loop() {
 		err := ds.Create(b.Context(), &v1.Tenant{
 			Meta: &v1.Meta{
@@ -53,6 +58,14 @@ func BenchmarkCreateTenant(b *testing.B) {
 }
 
 func BenchmarkUpdateTenant(b *testing.B) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, b)
+	defer func() {
+		require.NoError(b, db.Close())
+		require.NoError(b, container.Terminate(b.Context()))
+	}()
+	ds := New(log, db, &v1.Tenant{})
+
 	t1 := &v1.Tenant{
 		Meta: &v1.Meta{
 			Id: "t1-update",
@@ -75,6 +88,14 @@ func BenchmarkUpdateTenant(b *testing.B) {
 }
 
 func BenchmarkFindTenant(b *testing.B) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := startPostgres(log, b)
+	defer func() {
+		require.NoError(b, db.Close())
+		require.NoError(b, container.Terminate(b.Context()))
+	}()
+	ds := New(log, db, &v1.Tenant{})
+
 	err := ds.Create(b.Context(), &v1.Tenant{
 		Meta: &v1.Meta{
 			Id: "t1",

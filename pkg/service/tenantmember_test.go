@@ -1,6 +1,8 @@
 package service
 
 import (
+	"log/slog"
+	"os"
 	"slices"
 
 	"github.com/google/go-cmp/cmp"
@@ -14,82 +16,8 @@ import (
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
+	"github.com/metal-stack/tenant-apiserver/test/pg"
 )
-
-// func TestCreateTenantMember(t *testing.T) {
-// 	storageMock := mocks.NewMockStorage[*v1.TenantMember](t)
-// 	tenantStorageMock := mocks.NewMockStorage[*v1.Tenant](t)
-// 	ts := &tenantMemberService{
-// 		tenantMemberStore: storageMock,
-// 		tenantStore:       tenantStorageMock,
-// 		log:               slog.Default(),
-// 	}
-// 	ctx := context.Background()
-
-// 	t1 := &v1.Tenant{}
-// 	pm1 := &v1.TenantMember{
-// 		TenantId: "t1",
-// 		MemberId: "m1",
-// 	}
-// 	pmcr := &v1.TenantMemberCreateRequest{
-// 		TenantMember: pm1,
-// 	}
-// 	tenantStorageMock.On("Get", ctx, pm1.GetTenantId()).Return(t1, nil)
-// 	storageMock.On("Create", ctx, pm1).Return(nil)
-// 	resp, err := ts.Create(ctx, pmcr)
-// 	require.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.NotNil(t, resp.TenantMember)
-// 	assert.Equal(t, pmcr.TenantMember.TenantId, resp.TenantMember.GetTenantId())
-// }
-
-// func TestDeleteTenantMember(t *testing.T) {
-// 	storageMock := mocks.NewMockStorage[*v1.TenantMember](t)
-// 	tenantStorageMock := mocks.NewMockStorage[*v1.Tenant](t)
-// 	ts := &tenantMemberService{
-// 		tenantMemberStore: storageMock,
-// 		tenantStore:       tenantStorageMock,
-// 		log:               slog.Default(),
-// 	}
-// 	ctx := context.Background()
-// 	t3 := &v1.TenantMember{
-// 		Meta: &v1.Meta{Id: "p3"},
-// 	}
-// 	tdr := &v1.TenantMemberDeleteRequest{
-// 		Id: "p3",
-// 	}
-
-// 	storageMock.On("Delete", ctx, t3.Meta.Id).Return(nil)
-// 	resp, err := ts.Delete(ctx, tdr)
-// 	require.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.NotNil(t, resp.TenantMember)
-// 	assert.Equal(t, tdr.Id, resp.TenantMember.GetMeta().GetId())
-// }
-
-// func TestGetTenantMember(t *testing.T) {
-// 	storageMock := mocks.NewMockStorage[*v1.TenantMember](t)
-// 	tenantStorageMock := mocks.NewMockStorage[*v1.Tenant](t)
-// 	ts := &tenantMemberService{
-// 		tenantMemberStore: storageMock,
-// 		tenantStore:       tenantStorageMock,
-// 		log:               slog.Default(),
-// 	}
-// 	ctx := context.Background()
-// 	t4 := &v1.TenantMember{
-// 		Meta: &v1.Meta{Id: "p4"},
-// 	}
-// 	tgr := &v1.TenantMemberGetRequest{
-// 		Id: "p4",
-// 	}
-
-// 	storageMock.On("Get", ctx, "p4").Return(t4, nil)
-// 	resp, err := ts.Get(ctx, tgr)
-// 	require.NoError(t, err)
-// 	assert.NotNil(t, resp)
-// 	assert.NotNil(t, resp.TenantMember)
-// 	assert.Equal(t, tgr.Id, resp.TenantMember.GetMeta().GetId())
-// }
 
 func TestFindTenantMember(t *testing.T) {
 	ctx := t.Context()
@@ -98,8 +26,8 @@ func TestFindTenantMember(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := startPostgres(ctx, ves...)
-	require.NoError(t, err)
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := pg.StartPostgres(log, t, ves...)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -347,8 +275,8 @@ func TestUpdateTenantMember(t *testing.T) {
 		&v1.TenantMember{},
 	}
 
-	container, db, err := startPostgres(ctx, ves...)
-	require.NoError(t, err)
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := pg.StartPostgres(log, t, ves...)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))

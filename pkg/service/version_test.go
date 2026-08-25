@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"testing"
 
 	v1 "github.com/metal-stack/tenant-api/go/api/v1"
@@ -13,7 +12,7 @@ import (
 func TestGetVersion(t *testing.T) {
 
 	vs := &versionService{}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	expected := v1.VersionServiceGetResponse{Version: v.Version, Revision: v.Revision, BuildDate: v.BuildDate, GitSha1: v.GitSHA1}
 

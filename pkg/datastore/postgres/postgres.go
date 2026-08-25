@@ -91,6 +91,7 @@ func (ds *datastore[E]) Create(ctx context.Context, ve E) error {
 	id := meta.GetId()
 	if id == "" {
 		meta.Id = uuid.NewV7().String()
+		id = meta.Id
 	}
 	kind := meta.GetKind()
 	if kind == "" {
