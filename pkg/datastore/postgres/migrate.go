@@ -8,7 +8,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lopezator/migrator"
-	v1 "github.com/metal-stack/tenant-api/go/api/v1"
+	v1 "github.com/metal-stack/tenant-api/go/tenant/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/health"
 	healthv1 "google.golang.org/grpc/health/grpc_health_v1"
 )

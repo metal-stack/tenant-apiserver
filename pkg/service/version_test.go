@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	v1 "github.com/metal-stack/tenant-api/go/api/v1"
+	v1 "github.com/metal-stack/tenant-api/go/tenant/api/v1"
 	"github.com/metal-stack/v"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
