@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	apiv1 "github.com/metal-stack/tenant-api/go/api/v1"
+	apiv1 "github.com/metal-stack/tenant-api/go/tenant/api/v1"
 
-	apiv1connect "github.com/metal-stack/tenant-api/go/api/v1/apiv1connect"
+	apiv1connect "github.com/metal-stack/tenant-api/go/tenant/api/v1/apiv1connect"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/service"
 

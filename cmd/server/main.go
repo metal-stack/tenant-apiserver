@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"os"
 
-	apiv1 "github.com/metal-stack/tenant-api/go/api/v1"
+	apiv1 "github.com/metal-stack/tenant-api/go/tenant/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/memory"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"

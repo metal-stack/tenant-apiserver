@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 
-	v1 "github.com/metal-stack/tenant-api/go/api/v1"
+	v1 "github.com/metal-stack/tenant-api/go/tenant/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
 	"github.com/metal-stack/tenant-apiserver/test"

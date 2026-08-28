@@ -9,9 +9,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/jmoiron/sqlx"
-	apiv1 "github.com/metal-stack/tenant-api/go/api/v1"
-	"github.com/metal-stack/tenant-api/go/api/v1/apiv1connect"
 	"github.com/metal-stack/tenant-api/go/client"
+	apiv1 "github.com/metal-stack/tenant-api/go/tenant/api/v1"
+	"github.com/metal-stack/tenant-api/go/tenant/api/v1/apiv1connect"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"

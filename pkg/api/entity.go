@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	v1 "github.com/metal-stack/tenant-api/go/api/v1"
+	v1 "github.com/metal-stack/tenant-api/go/tenant/api/v1"
 )
 
 // Entity defines a database entity which is stored in jsonb format and with version information

@@ -10,7 +10,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
-	v1 "github.com/metal-stack/tenant-api/go/api/v1"
+	v1 "github.com/metal-stack/tenant-api/go/tenant/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 )

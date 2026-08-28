@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"os"
 
-	apiv1 "github.com/metal-stack/tenant-api/go/api/v1"
 	tenant "github.com/metal-stack/tenant-api/go/client"
+	apiv1 "github.com/metal-stack/tenant-api/go/tenant/api/v1"
 )
 
 func main() {
