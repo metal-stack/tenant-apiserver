@@ -35,6 +35,14 @@ func (s *tenantMemberService) Create(ctx context.Context, req *v1.TenantMemberSe
 		return nil, err
 	}
 
+	_, err = s.tenantStore.Get(ctx, tenantMember.GetMemberId())
+	if err != nil && errorutil.IsNotFound(err) {
+		return nil, errorutil.NotFound("unable to find member:%s for tenantMember", tenantMember.GetMemberId())
+	}
+	if err != nil {
+		return nil, err
+	}
+
 	// allow create without sending Meta
 	if tenantMember.Meta == nil {
 		tenantMember.Meta = &v1.Meta{}
