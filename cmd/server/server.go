@@ -166,14 +166,12 @@ func newLoggingInterceptor(log *slog.Logger) connect.UnaryInterceptorFunc {
 
 			if debug {
 				log = log.With("request", req.Any())
+				log.Debug("handling unary call")
 			}
-
-			if req.Spec().Procedure == apiv1connect.VersionServiceGetProcedure {
-				return next(ctx, req)
-			}
-			log.Info("handling unary call")
 
 			response, err := next(ctx, req)
+
+			log = log.With("duration", time.Since(start).String())
 
 			if debug && response != nil {
 				log = log.With("response", response.Any())
@@ -181,9 +179,9 @@ func newLoggingInterceptor(log *slog.Logger) connect.UnaryInterceptorFunc {
 
 			if err != nil {
 				log.Error("error during unary call", "error", err)
-			} else if debug {
-				log.Debug("handled call successfully", "duration", time.Since(start).String())
 			}
+
+			log.Info("handled unary call")
 
 			return response, err
 		})
