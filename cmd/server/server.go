@@ -20,11 +20,12 @@ import (
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/sdk/metric"
 
-	"connectrpc.com/connect"
-	"connectrpc.com/grpcreflect"
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
+	"connectrpc.com/grpcreflect/v2"
 	"connectrpc.com/otelconnect"
 
-	"connectrpc.com/grpchealth"
+	"connectrpc.com/grpchealth/v2"
 )
 
 type config struct {
@@ -99,7 +100,7 @@ func (s *server) Run() error {
 		}
 	}()
 
-	otelInterceptor, err := otelconnect.NewInterceptor(otelconnect.WithMeterProvider(provider))
+	otelInterceptor, err := otelconnect.NewServerInterceptor(otelconnect.WithMeterProvider(provider))
 	if err != nil {
 		return err
 	}
@@ -114,14 +115,15 @@ func (s *server) Run() error {
 	versionService := service.NewVersionService()
 
 	// healthv1.RegisterHealthServer(grpcServer, healthServer)
-	interceptors := connect.WithInterceptors(loggingInterceptor, otelInterceptor)
 
 	mux := http.NewServeMux()
-	mux.Handle(apiv1connect.NewProjectServiceHandler(projectService, interceptors))
-	mux.Handle(apiv1connect.NewProjectMemberServiceHandler(projectMemberService, interceptors))
-	mux.Handle(apiv1connect.NewTenantServiceHandler(tenantService, interceptors))
-	mux.Handle(apiv1connect.NewTenantMemberServiceHandler(tenantMemberService, interceptors))
-	mux.Handle(apiv1connect.NewVersionServiceHandler(versionService, interceptors))
+	srv := connect.NewServer(loggingInterceptor, otelInterceptor)
+	apiv1connect.RegisterProjectServiceHandler(srv, projectService)
+	apiv1connect.RegisterProjectMemberServiceHandler(srv, projectMemberService)
+	apiv1connect.RegisterTenantServiceHandler(srv, tenantService)
+	apiv1connect.RegisterTenantMemberServiceHandler(srv, tenantMemberService)
+	apiv1connect.RegisterVersionServiceHandler(srv, versionService)
+	connecthttp.Mount(mux, srv, connecthttp.WithReadMaxBytes(0))
 
 	allServiceNames := []string{
 		apiv1connect.ProjectServiceName,
@@ -132,12 +134,14 @@ func (s *server) Run() error {
 	}
 
 	checker := grpchealth.NewStaticChecker(allServiceNames...)
-	mux.Handle(grpchealth.NewHandler(checker))
+	srv2 := connect.NewServer()
+	grpchealth.Register(srv2, checker)
 
 	// enable remote service listing by enabling reflection
-	reflector := grpcreflect.NewStaticReflector(allServiceNames...)
-	mux.Handle(grpcreflect.NewHandlerV1(reflector))
-	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
+	grpcreflect.Register(srv2, grpcreflect.WithNamer(grpcreflect.NamerFunc(func() []string {
+		return allServiceNames
+	})))
+	connecthttp.Mount(mux, srv2, connecthttp.WithReadMaxBytes(0))
 
 	server := http.Server{
 		Addr:              s.c.HttpServerEndpoint,
@@ -155,36 +159,54 @@ func (s *server) Run() error {
 	return err
 }
 
-func newLoggingInterceptor(log *slog.Logger) connect.UnaryInterceptorFunc {
-	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
-		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+func newLoggingInterceptor(log *slog.Logger) connect.ServerInterceptor {
+	return func(next connect.ServerFunc) connect.ServerFunc {
+		return func(ctx context.Context, spec connect.Spec, stream connect.ServerStream) error {
 			var (
-				log   = log.With("procedure", req.Spec().Procedure)
-				debug = log.Enabled(ctx, slog.LevelDebug)
-				start = time.Now()
+				callLog = log.With("procedure", spec.Procedure)
+				debug   = callLog.Enabled(ctx, slog.LevelDebug)
+				start   = time.Now()
 			)
 
 			if debug {
-				log = log.With("request", req.Any())
-				log.Debug("handling unary call")
+				callLog.Debug("handling call")
 			}
 
-			response, err := next(ctx, req)
+			err := next(ctx, spec, &loggingStream{ServerStream: stream, log: callLog, debug: debug})
 
-			log = log.With("duration", time.Since(start).String())
-
-			if debug && response != nil {
-				log = log.With("response", response.Any())
-			}
+			callLog = callLog.With("duration", time.Since(start).String())
 
 			if err != nil {
-				log.Error("error during unary call", "error", err)
+				callLog.Error("error during call", "error", err)
 			}
 
-			log.Info("handled unary call")
+			callLog.Info("handled call")
 
-			return response, err
-		})
+			return err
+		}
 	}
-	return connect.UnaryInterceptorFunc(interceptor)
+}
+
+type loggingStream struct {
+	connect.ServerStream
+
+	log   *slog.Logger
+	debug bool
+}
+
+func (s *loggingStream) Receive(msg any) error {
+	if err := s.ServerStream.Receive(msg); err != nil {
+		return err
+	}
+	if s.debug {
+		s.log.Debug("received request", "request", msg)
+	}
+	return nil
+}
+
+func (s *loggingStream) Send(msg any) error {
+	if s.debug {
+		s.log.Debug("sending response", "response", msg)
+	}
+	return s.ServerStream.Send(msg)
 }

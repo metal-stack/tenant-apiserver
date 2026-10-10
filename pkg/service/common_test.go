@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"testing"
 
+	"connectrpc.com/connect/v2"
+	"connectrpc.com/connect/v2/connecthttp"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jmoiron/sqlx"
 	"github.com/metal-stack/tenant-api/go/client"
@@ -66,11 +68,13 @@ func startTenantApiserverWithDB(t testing.TB, log *slog.Logger, dbcloser func(),
 	versionService := NewVersionService()
 
 	mux := http.NewServeMux()
-	mux.Handle(apiv1connect.NewProjectServiceHandler(projectService))
-	mux.Handle(apiv1connect.NewProjectMemberServiceHandler(projectMemberService))
-	mux.Handle(apiv1connect.NewTenantServiceHandler(tenantService))
-	mux.Handle(apiv1connect.NewTenantMemberServiceHandler(tenantMemberService))
-	mux.Handle(apiv1connect.NewVersionServiceHandler(versionService))
+	srv := connect.NewServer()
+	apiv1connect.RegisterProjectServiceHandler(srv, projectService)
+	apiv1connect.RegisterProjectMemberServiceHandler(srv, projectMemberService)
+	apiv1connect.RegisterTenantServiceHandler(srv, tenantService)
+	apiv1connect.RegisterTenantMemberServiceHandler(srv, tenantMemberService)
+	apiv1connect.RegisterVersionServiceHandler(srv, versionService)
+	connecthttp.Mount(mux, srv, connecthttp.WithReadMaxBytes(0))
 
 	server := httptest.NewUnstartedServer(mux)
 	server.EnableHTTP2 = true
