@@ -13,7 +13,6 @@ import (
 
 	"testing"
 
-	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
 	"github.com/metal-stack/tenant-apiserver/test/pg"
@@ -21,15 +20,9 @@ import (
 
 func TestFindProjectMember(t *testing.T) {
 	ctx := t.Context()
-	ves := []api.Entity{
-		&v1.Project{},
-		&v1.ProjectMember{},
-		&v1.Tenant{},
-		&v1.TenantMember{},
-	}
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	container, db := pg.StartPostgres(log, t, ves...)
+	container, db := pg.StartPostgres(log, t)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -258,7 +251,7 @@ func TestFindProjectMember(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, ve := range ves {
+			for _, ve := range pg.AllEntities() {
 				_, err := db.ExecContext(ctx, "TRUNCATE TABLE "+ve.TableName())
 				require.NoError(t, err)
 			}
@@ -288,17 +281,249 @@ func TestFindProjectMember(t *testing.T) {
 	}
 }
 
-func TestUpdateProjectMember(t *testing.T) {
+func TestCreateProjectMember(t *testing.T) {
 	ctx := t.Context()
-	ves := []api.Entity{
-		&v1.Project{},
-		&v1.ProjectMember{},
-		&v1.Tenant{},
-		&v1.TenantMember{},
-	}
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	container, db := pg.StartPostgres(log, t, ves...)
+	container, db := pg.StartPostgres(log, t)
+	defer func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, container.Terminate(ctx))
+	}()
+
+	var (
+		projectMemberStore = postgres.New(log, db, &v1.ProjectMember{})
+		projectStore       = postgres.New(log, db, &v1.Project{})
+		tenantStore        = postgres.New(log, db, &v1.Tenant{})
+
+		testTenant1 = &v1.Tenant{
+			Meta: &v1.Meta{
+				Id:         "tenant-1",
+				Kind:       "Tenant",
+				Apiversion: "v1",
+				Version:    1,
+			},
+			Name:        "tenant 1",
+			Description: "test tenant 1",
+		}
+		testProject1 = &v1.Project{
+			Meta: &v1.Meta{
+				Id:         "project-1",
+				Kind:       "Project",
+				Apiversion: "v1",
+				Version:    1,
+			},
+			Name:        "project 1",
+			Description: "test project 1",
+			TenantId:    "tenant-1",
+		}
+
+		service = &projectMemberService{
+			log:                log,
+			projectMemberStore: projectMemberStore,
+			tenantStore:        tenantStore,
+			projectStore:       projectStore,
+		}
+	)
+
+	tests := []struct {
+		name    string
+		prepare func()
+		req     *v1.ProjectMemberServiceCreateRequest
+		want    *v1.ProjectMemberServiceCreateResponse
+		wantErr error
+	}{
+		{
+			name: "create project member",
+			req: &v1.ProjectMemberServiceCreateRequest{
+				ProjectMember: &v1.ProjectMember{
+					Meta: &v1.Meta{
+						Id:         "1",
+						Kind:       "ProjectMember",
+						Apiversion: "v1",
+						Annotations: map[string]string{
+							"role": "owner",
+						},
+						Labels: []string{"a", "b"},
+					},
+					ProjectId: "project-1",
+					TenantId:  "tenant-1",
+					Namespace: "a",
+				},
+			},
+			prepare: func() {
+				require.NoError(t, tenantStore.Create(ctx, testTenant1))
+				require.NoError(t, projectStore.Create(ctx, testProject1))
+			},
+			want: &v1.ProjectMemberServiceCreateResponse{
+				ProjectMember: &v1.ProjectMember{
+					Meta: &v1.Meta{
+						Id:         "1",
+						Kind:       "ProjectMember",
+						Apiversion: "v1",
+						Annotations: map[string]string{
+							"role": "owner",
+						},
+						Labels: []string{"a", "b"},
+					},
+					ProjectId: "project-1",
+					TenantId:  "tenant-1",
+					Namespace: "a",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "create project member without meta",
+			req: &v1.ProjectMemberServiceCreateRequest{
+				ProjectMember: &v1.ProjectMember{
+					Meta:      &v1.Meta{Id: "1"},
+					ProjectId: "project-1",
+					TenantId:  "tenant-1",
+					Namespace: "a",
+				},
+			},
+			prepare: func() {
+				require.NoError(t, tenantStore.Create(ctx, testTenant1))
+				require.NoError(t, projectStore.Create(ctx, testProject1))
+			},
+			want: &v1.ProjectMemberServiceCreateResponse{
+				ProjectMember: &v1.ProjectMember{
+					Meta: &v1.Meta{
+						Id:         "1",
+						Kind:       "ProjectMember",
+						Apiversion: "v1",
+					},
+					ProjectId: "project-1",
+					TenantId:  "tenant-1",
+					Namespace: "a",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "tenant not found",
+			req: &v1.ProjectMemberServiceCreateRequest{
+				ProjectMember: &v1.ProjectMember{
+					Meta:      &v1.Meta{Id: "1"},
+					ProjectId: "project-1",
+					TenantId:  "unknown-tenant",
+					Namespace: "a",
+				},
+			},
+			prepare: func() {
+				require.NoError(t, projectStore.Create(ctx, testProject1))
+			},
+			want:    nil,
+			wantErr: errorutil.NotFound("unable to find tenant:%s for projectMember", "unknown-tenant"),
+		},
+		{
+			name: "project not found",
+			req: &v1.ProjectMemberServiceCreateRequest{
+				ProjectMember: &v1.ProjectMember{
+					Meta:      &v1.Meta{Id: "1"},
+					ProjectId: "unknown-project",
+					TenantId:  "tenant-1",
+					Namespace: "a",
+				},
+			},
+			prepare: func() {
+				require.NoError(t, tenantStore.Create(ctx, testTenant1))
+			},
+			want:    nil,
+			wantErr: errorutil.NotFound("unable to find project:%s for projectMember", "unknown-project"),
+		},
+		{
+			name: "create duplicate membership",
+			req: &v1.ProjectMemberServiceCreateRequest{
+				ProjectMember: &v1.ProjectMember{
+					Meta:      &v1.Meta{Id: "2"},
+					ProjectId: "project-1",
+					TenantId:  "tenant-1",
+					Namespace: "a",
+				},
+			},
+			prepare: func() {
+				require.NoError(t, tenantStore.Create(ctx, testTenant1))
+				require.NoError(t, projectStore.Create(ctx, testProject1))
+				require.NoError(t, projectMemberStore.Create(ctx, &v1.ProjectMember{
+					Meta:      &v1.Meta{Id: "1"},
+					ProjectId: "project-1",
+					TenantId:  "tenant-1",
+					Namespace: "a",
+				}))
+			},
+			want:    nil,
+			wantErr: errorutil.Conflict("an entity of type:projectmember with the id:2 already exists"),
+		},
+		{
+			name: "create membership with different namespace",
+			req: &v1.ProjectMemberServiceCreateRequest{
+				ProjectMember: &v1.ProjectMember{
+					Meta:      &v1.Meta{Id: "2"},
+					ProjectId: "project-1",
+					TenantId:  "tenant-1",
+					Namespace: "b",
+				},
+			},
+			prepare: func() {
+				require.NoError(t, tenantStore.Create(ctx, testTenant1))
+				require.NoError(t, projectStore.Create(ctx, testProject1))
+				require.NoError(t, projectMemberStore.Create(ctx, &v1.ProjectMember{
+					Meta:      &v1.Meta{Id: "1"},
+					ProjectId: "project-1",
+					TenantId:  "tenant-1",
+					Namespace: "a",
+				}))
+			},
+			want: &v1.ProjectMemberServiceCreateResponse{
+				ProjectMember: &v1.ProjectMember{
+					Meta: &v1.Meta{
+						Id:         "2",
+						Kind:       "ProjectMember",
+						Apiversion: "v1",
+					},
+					ProjectId: "project-1",
+					TenantId:  "tenant-1",
+					Namespace: "b",
+				},
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for _, ve := range pg.AllEntities() {
+				_, err := db.ExecContext(ctx, "TRUNCATE TABLE "+ve.TableName())
+				require.NoError(t, err)
+			}
+
+			if tt.prepare != nil {
+				tt.prepare()
+			}
+
+			got, err := service.Create(ctx, tt.req)
+			if diff := cmp.Diff(err, tt.wantErr, errorutil.ConnectErrorComparer()); diff != "" {
+				t.Errorf("(-want +got):\n%s", diff)
+				return
+			}
+
+			if err == nil {
+				assert.NotNil(t, got.ProjectMember.Meta.CreatedTime)
+			}
+
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(v1.Meta{}, "CreatedTime", "UpdatedTime"), IgnoreUnexported()); diff != "" {
+				t.Errorf("(-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUpdateProjectMember(t *testing.T) {
+	ctx := t.Context()
+
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	container, db := pg.StartPostgres(log, t)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -463,7 +688,7 @@ func TestUpdateProjectMember(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, ve := range ves {
+			for _, ve := range pg.AllEntities() {
 				_, err := db.ExecContext(ctx, "TRUNCATE TABLE "+ve.TableName())
 				require.NoError(t, err)
 			}

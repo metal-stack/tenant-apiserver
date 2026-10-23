@@ -11,6 +11,7 @@ import (
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/memory"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
+	"github.com/metal-stack/tenant-apiserver/pkg/health"
 	"github.com/metal-stack/v"
 	cli "github.com/urfave/cli/v3"
 )
@@ -104,6 +105,11 @@ func main() {
 					if err != nil {
 						return fmt.Errorf("failed to create postgres connection: %w", err)
 					}
+
+					if err := postgres.MigrateDB(c.Log, db, health.NewHealthServer()); err != nil {
+						return fmt.Errorf("failed to migrate database: %w", err)
+					}
+
 					ps := postgres.New(c.Log, db, &apiv1.Project{})
 					pms := postgres.New(c.Log, db, &apiv1.ProjectMember{})
 					ts := postgres.New(c.Log, db, &apiv1.Tenant{})

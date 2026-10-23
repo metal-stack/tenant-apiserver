@@ -45,12 +45,22 @@ func (s *tenantService) Create(ctx context.Context, req *v1.TenantServiceCreateR
 		tenant.Meta = &v1.Meta{}
 	}
 	err := s.tenantStore.Create(ctx, tenant)
-	return &v1.TenantServiceCreateResponse{Tenant: tenant}, err
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.TenantServiceCreateResponse{Tenant: tenant}, nil
 }
+
 func (s *tenantService) Update(ctx context.Context, req *v1.TenantServiceUpdateRequest) (*v1.TenantServiceUpdateResponse, error) {
 	tenant := req.Tenant
+
 	err := s.tenantStore.Update(ctx, tenant)
-	return &v1.TenantServiceUpdateResponse{Tenant: tenant}, err
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.TenantServiceUpdateResponse{Tenant: tenant}, nil
 }
 
 func (s *tenantService) Delete(ctx context.Context, req *v1.TenantServiceDeleteRequest) (*v1.TenantServiceDeleteResponse, error) {
@@ -91,10 +101,12 @@ func (s *tenantService) Delete(ctx context.Context, req *v1.TenantServiceDeleteR
 			return nil, err
 		}
 	}
+
 	err = s.tenantStore.Delete(ctx, tenant.Meta.Id)
 	if err != nil {
 		return nil, err
 	}
+
 	return &v1.TenantServiceDeleteResponse{Tenant: tenant}, nil
 }
 
@@ -104,21 +116,21 @@ func (s *tenantService) Get(ctx context.Context, req *v1.TenantServiceGetRequest
 		return nil, err
 	}
 
-	// response with entity, no error
 	return &v1.TenantServiceGetResponse{Tenant: tenant}, nil
 }
 
 func (s *tenantService) GetHistory(ctx context.Context, req *v1.TenantServiceGetHistoryRequest) (*v1.TenantServiceGetHistoryResponse, error) {
 	tenant := &v1.Tenant{}
 	at := req.At.AsTime()
+
 	s.log.Info("getHistory", "id", req.Id, "at", at)
+
 	err := s.tenantStore.GetHistory(ctx, req.Id, at, tenant)
 	if err != nil {
 		return nil, err
 	}
 
-	// response with entity, no error
-	return &v1.TenantServiceGetHistoryResponse{Tenant: tenant}, err
+	return &v1.TenantServiceGetHistoryResponse{Tenant: tenant}, nil
 }
 
 func (s *tenantService) List(ctx context.Context, req *v1.TenantServiceListRequest) (*v1.TenantServiceListResponse, error) {

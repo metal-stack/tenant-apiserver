@@ -49,8 +49,13 @@ func (s *projectMemberService) Create(ctx context.Context, req *v1.ProjectMember
 	if projectMember.Meta == nil {
 		projectMember.Meta = &v1.Meta{}
 	}
+
 	err = s.projectMemberStore.Create(ctx, projectMember)
-	return &v1.ProjectMemberServiceCreateResponse{ProjectMember: projectMember}, err
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.ProjectMemberServiceCreateResponse{ProjectMember: projectMember}, nil
 }
 
 func (s *projectMemberService) Update(ctx context.Context, req *v1.ProjectMemberServiceUpdateRequest) (*v1.ProjectMemberServiceUpdateResponse, error) {
@@ -72,8 +77,11 @@ func (s *projectMemberService) Update(ctx context.Context, req *v1.ProjectMember
 	}
 
 	err = s.projectMemberStore.Update(ctx, projectMember)
+	if err != nil {
+		return nil, err
+	}
 
-	return &v1.ProjectMemberServiceUpdateResponse{ProjectMember: projectMember}, err
+	return &v1.ProjectMemberServiceUpdateResponse{ProjectMember: projectMember}, nil
 }
 
 func (s *projectMemberService) Delete(ctx context.Context, req *v1.ProjectMemberServiceDeleteRequest) (*v1.ProjectMemberServiceDeleteResponse, error) {
@@ -82,8 +90,11 @@ func (s *projectMemberService) Delete(ctx context.Context, req *v1.ProjectMember
 	}
 
 	err := s.projectMemberStore.Delete(ctx, projectMember.Meta.Id)
+	if err != nil {
+		return nil, err
+	}
 
-	return &v1.ProjectMemberServiceDeleteResponse{ProjectMember: projectMember}, err
+	return &v1.ProjectMemberServiceDeleteResponse{ProjectMember: projectMember}, nil
 }
 
 func (s *projectMemberService) Get(ctx context.Context, req *v1.ProjectMemberServiceGetRequest) (*v1.ProjectMemberServiceGetResponse, error) {
