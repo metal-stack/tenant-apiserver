@@ -3,7 +3,7 @@ module github.com/metal-stack/tenant-apiserver
 go 1.27
 
 require (
-	connectrpc.com/connect/v2 v2.0.0
+	connectrpc.com/connect/v2 v2.0.2
 	connectrpc.com/grpchealth/v2 v2.0.0
 	connectrpc.com/grpcreflect/v2 v2.0.0
 	connectrpc.com/otelconnect v0.12.0
@@ -26,11 +26,11 @@ require (
 )
 
 require (
-	connectrpc.com/connect v1.19.1 // indirect
+	connectrpc.com/connect v1.21.1 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
-	github.com/Azure/go-ansiterm v0.0.0-20261008234032-65faa4be4f89 // indirect
-	github.com/Microsoft/go-winio v0.6.3 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20261013165250-51075c6ea6bc // indirect
+	github.com/Microsoft/go-winio v0.6.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -42,13 +42,13 @@ require (
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-connections v0.8.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/ebitengine/purego v0.11.1 // indirect
+	github.com/ebitengine/purego v0.11.2 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/klauspost/compress v1.20.1 // indirect
+	github.com/klauspost/compress v1.20.3 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20260802145828-341c2f0c90b5 // indirect
@@ -67,9 +67,9 @@ require (
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20260916203055-22a1a467d9f0 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
-	github.com/prometheus/common v0.72.0 // indirect
+	github.com/prometheus/common v0.72.1 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
-	github.com/prometheus/procfs v0.22.0 // indirect
+	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.9 // indirect
 	github.com/sirupsen/logrus v1.10.2 // indirect
 	github.com/tklauser/go-sysconf v0.4.0 // indirect
@@ -87,5 +87,5 @@ require (
 	golang.org/x/net v0.61.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261019180522-ce908d29299b // indirect
 )
