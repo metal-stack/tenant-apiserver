@@ -123,7 +123,6 @@ func (s *server) Run() error {
 	apiv1connect.RegisterTenantServiceHandler(srv, tenantService)
 	apiv1connect.RegisterTenantMemberServiceHandler(srv, tenantMemberService)
 	apiv1connect.RegisterVersionServiceHandler(srv, versionService)
-	connecthttp.Mount(mux, srv, connecthttp.WithReadMaxBytes(0))
 
 	allServiceNames := []string{
 		apiv1connect.ProjectServiceName,
@@ -134,21 +133,19 @@ func (s *server) Run() error {
 	}
 
 	checker := grpchealth.NewStaticChecker(allServiceNames...)
-	srv2 := connect.NewServer()
-	grpchealth.Register(srv2, checker)
-
+	grpchealth.Register(srv, checker)
 	// enable remote service listing by enabling reflection
-	grpcreflect.Register(srv2, grpcreflect.WithNamer(grpcreflect.NamerFunc(func() []string {
+	grpcreflect.Register(srv, grpcreflect.WithNamer(grpcreflect.NamerFunc(func() []string {
 		return allServiceNames
 	})))
-	connecthttp.Mount(mux, srv2, connecthttp.WithReadMaxBytes(0))
+	connecthttp.Mount(mux, srv, connecthttp.WithReadMaxBytes(0))
 
 	server := http.Server{
 		Addr:              s.c.HttpServerEndpoint,
 		ReadHeaderTimeout: 1 * time.Minute,
 		Handler:           mux,
-
-		Protocols: new(http.Protocols)}
+		Protocols:         &http.Protocols{},
+	}
 	server.Protocols.SetHTTP1(true)
 	server.Protocols.SetHTTP2(true)
 	// For gRPC clients, it's convenient to support HTTP/2 without TLS
