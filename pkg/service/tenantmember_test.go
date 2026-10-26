@@ -13,7 +13,6 @@ import (
 
 	"testing"
 
-	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
 	"github.com/metal-stack/tenant-apiserver/test/pg"
@@ -21,13 +20,9 @@ import (
 
 func TestFindTenantMember(t *testing.T) {
 	ctx := t.Context()
-	ves := []api.Entity{
-		&v1.Tenant{},
-		&v1.TenantMember{},
-	}
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	container, db := pg.StartPostgres(log, t, ves...)
+	container, db := pg.StartPostgres(log, t)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -238,7 +233,7 @@ func TestFindTenantMember(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, ve := range ves {
+			for _, ve := range pg.AllEntities() {
 				_, err := db.ExecContext(ctx, "TRUNCATE TABLE "+ve.TableName())
 				require.NoError(t, err)
 			}
@@ -270,13 +265,9 @@ func TestFindTenantMember(t *testing.T) {
 
 func TestCreateTenantMember(t *testing.T) {
 	ctx := t.Context()
-	ves := []api.Entity{
-		&v1.Tenant{},
-		&v1.TenantMember{},
-	}
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	container, db := pg.StartPostgres(log, t, ves...)
+	container, db := pg.StartPostgres(log, t)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -420,10 +411,44 @@ func TestCreateTenantMember(t *testing.T) {
 			want:    nil,
 			wantErr: errorutil.NotFound("unable to find member:%s for tenantMember", "unknown-member"),
 		},
+		{
+			name: "create membership with different namespace",
+			req: &v1.TenantMemberServiceCreateRequest{
+				TenantMember: &v1.TenantMember{
+					Meta:      &v1.Meta{Id: "2"},
+					TenantId:  "tenant-1",
+					MemberId:  "tenant-2",
+					Namespace: "b",
+				},
+			},
+			prepare: func() {
+				require.NoError(t, tenantStore.Create(ctx, testTenant1))
+				require.NoError(t, tenantStore.Create(ctx, testTenant2))
+				require.NoError(t, tenantMemberStore.Create(ctx, &v1.TenantMember{
+					Meta:      &v1.Meta{Id: "1"},
+					TenantId:  "tenant-1",
+					MemberId:  "tenant-2",
+					Namespace: "a",
+				}))
+			},
+			want: &v1.TenantMemberServiceCreateResponse{
+				TenantMember: &v1.TenantMember{
+					Meta: &v1.Meta{
+						Id:         "2",
+						Kind:       "TenantMember",
+						Apiversion: "v1",
+					},
+					TenantId:  "tenant-1",
+					MemberId:  "tenant-2",
+					Namespace: "b",
+				},
+			},
+			wantErr: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, ve := range ves {
+			for _, ve := range pg.AllEntities() {
 				_, err := db.ExecContext(ctx, "TRUNCATE TABLE "+ve.TableName())
 				require.NoError(t, err)
 			}
@@ -451,13 +476,9 @@ func TestCreateTenantMember(t *testing.T) {
 
 func TestUpdateTenantMember(t *testing.T) {
 	ctx := t.Context()
-	ves := []api.Entity{
-		&v1.Tenant{},
-		&v1.TenantMember{},
-	}
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	container, db := pg.StartPostgres(log, t, ves...)
+	container, db := pg.StartPostgres(log, t)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -620,7 +641,7 @@ func TestUpdateTenantMember(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, ve := range ves {
+			for _, ve := range pg.AllEntities() {
 				_, err := db.ExecContext(ctx, "TRUNCATE TABLE "+ve.TableName())
 				require.NoError(t, err)
 			}
