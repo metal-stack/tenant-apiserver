@@ -12,22 +12,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/runtime/protoimpl"
 
-	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
 	"github.com/metal-stack/tenant-apiserver/test/pg"
 )
 
 func TestFindTenant(t *testing.T) {
 	ctx := t.Context()
-	ves := []api.Entity{
-		&v1.Project{},
-		&v1.ProjectMember{},
-		&v1.Tenant{},
-		&v1.TenantMember{},
-	}
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	container, db := pg.StartPostgres(log, t, ves...)
+	container, db := pg.StartPostgres(log, t)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -235,7 +228,7 @@ func TestFindTenant(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, ve := range ves {
+			for _, ve := range pg.AllEntities() {
 				_, err := db.ExecContext(ctx, "TRUNCATE TABLE "+ve.TableName())
 				require.NoError(t, err)
 			}
@@ -265,15 +258,9 @@ func TestFindTenant(t *testing.T) {
 
 func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 	ctx := t.Context()
-	ves := []api.Entity{
-		&v1.Project{},
-		&v1.ProjectMember{},
-		&v1.Tenant{},
-		&v1.TenantMember{},
-	}
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	container, db := pg.StartPostgres(log, t, ves...)
+	container, db := pg.StartPostgres(log, t)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -535,7 +522,7 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, ve := range ves {
+			for _, ve := range pg.AllEntities() {
 				_, err := db.ExecContext(ctx, "TRUNCATE TABLE "+ve.TableName())
 				require.NoError(t, err)
 			}
@@ -565,15 +552,9 @@ func Test_tenantService_FindParticipatingProjects(t *testing.T) {
 
 func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 	ctx := t.Context()
-	ves := []api.Entity{
-		&v1.Project{},
-		&v1.ProjectMember{},
-		&v1.Tenant{},
-		&v1.TenantMember{},
-	}
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	container, db := pg.StartPostgres(log, t, ves...)
+	container, db := pg.StartPostgres(log, t)
 	defer func() {
 		require.NoError(t, db.Close())
 		require.NoError(t, container.Terminate(ctx))
@@ -817,7 +798,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, ve := range ves {
+			for _, ve := range pg.AllEntities() {
 				_, err := db.ExecContext(ctx, "TRUNCATE TABLE "+ve.TableName())
 				require.NoError(t, err)
 			}
@@ -849,14 +830,9 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 
 func Test_tenantService_ListTenantMembers(t *testing.T) {
 	ctx := t.Context()
-	ves := []api.Entity{
-		&v1.Project{},
-		&v1.ProjectMember{},
-		&v1.Tenant{},
-		&v1.TenantMember{},
-	}
+
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	container, db := pg.StartPostgres(log, t, ves...)
+	container, db := pg.StartPostgres(log, t)
 
 	defer func() {
 		require.NoError(t, db.Close())
@@ -1095,7 +1071,7 @@ func Test_tenantService_ListTenantMembers(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, ve := range ves {
+			for _, ve := range pg.AllEntities() {
 				_, err := db.ExecContext(ctx, "TRUNCATE TABLE "+ve.TableName())
 				require.NoError(t, err)
 			}

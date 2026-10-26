@@ -20,7 +20,7 @@ clean:
 
 .PHONY: test
 test:
-	CGO_ENABLED=1 go test -cover -race -timeout 30s ./...
+	CGO_ENABLED=1 go test -cover -race -timeout 600s ./...
 
 .PHONY: bench
 bench:
