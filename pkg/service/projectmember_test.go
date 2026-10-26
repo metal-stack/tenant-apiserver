@@ -434,6 +434,29 @@ func TestCreateProjectMember(t *testing.T) {
 			wantErr: errorutil.NotFound("unable to find project:%s for projectMember", "unknown-project"),
 		},
 		{
+			name: "create duplicate membership",
+			req: &v1.ProjectMemberServiceCreateRequest{
+				ProjectMember: &v1.ProjectMember{
+					Meta:      &v1.Meta{Id: "2"},
+					ProjectId: "project-1",
+					TenantId:  "tenant-1",
+					Namespace: "a",
+				},
+			},
+			prepare: func() {
+				require.NoError(t, tenantStore.Create(ctx, testTenant1))
+				require.NoError(t, projectStore.Create(ctx, testProject1))
+				require.NoError(t, projectMemberStore.Create(ctx, &v1.ProjectMember{
+					Meta:      &v1.Meta{Id: "1"},
+					ProjectId: "project-1",
+					TenantId:  "tenant-1",
+					Namespace: "a",
+				}))
+			},
+			want:    nil,
+			wantErr: errorutil.Conflict("an entity of type:projectmember with the id:2 already exists"),
+		},
+		{
 			name: "create membership with different namespace",
 			req: &v1.ProjectMemberServiceCreateRequest{
 				ProjectMember: &v1.ProjectMember{

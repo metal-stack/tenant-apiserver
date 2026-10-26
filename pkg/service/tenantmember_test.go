@@ -412,6 +412,37 @@ func TestCreateTenantMember(t *testing.T) {
 			wantErr: errorutil.NotFound("unable to find member:%s for tenantMember", "unknown-member"),
 		},
 		{
+			name: "create duplicate membership",
+			req: &v1.TenantMemberServiceCreateRequest{
+				TenantMember: &v1.TenantMember{
+					Meta: &v1.Meta{
+						Kind:       "TenantMember",
+						Apiversion: "v1",
+						Id:         "1",
+					},
+					TenantId:  "tenant-1",
+					MemberId:  "tenant-2",
+					Namespace: "a",
+				},
+			},
+			prepare: func() {
+				require.NoError(t, tenantStore.Create(ctx, testTenant1))
+				require.NoError(t, tenantStore.Create(ctx, testTenant2))
+				require.NoError(t, tenantMemberStore.Create(ctx, &v1.TenantMember{
+					Meta: &v1.Meta{
+						Kind:       "TenantMember",
+						Apiversion: "v1",
+						Id:         "2",
+					},
+					TenantId:  "tenant-1",
+					MemberId:  "tenant-2",
+					Namespace: "a",
+				}))
+			},
+			want:    nil,
+			wantErr: errorutil.Conflict("an entity of type:tenantmember with the id:1 already exists"),
+		},
+		{
 			name: "create membership with different namespace",
 			req: &v1.TenantMemberServiceCreateRequest{
 				TenantMember: &v1.TenantMember{

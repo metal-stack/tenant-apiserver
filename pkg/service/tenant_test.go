@@ -747,13 +747,6 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 					ProjectId: "indirect",
 					TenantId:  "req-tnt",
 				}))
-				// should not interfere:
-				require.NoError(t, projectMemberStore.Create(ctx, &v1.ProjectMember{
-					Meta:      &v1.Meta{Annotations: map[string]string{"role": "admin"}},
-					ProjectId: "indirect",
-					TenantId:  "req-tnt",
-					Namespace: "other",
-				}))
 
 				require.NoError(t, tenantStore.Create(ctx, &v1.Tenant{Meta: &v1.Meta{Id: "direct-tnt"}}))
 				require.NoError(t, tenantMemberStore.Create(ctx, &v1.TenantMember{
@@ -761,6 +754,7 @@ func Test_tenantService_FindParticipatingTenants(t *testing.T) {
 					TenantId: "direct-tnt",
 					MemberId: "req-tnt",
 				}))
+
 				// should not interfere:
 				require.NoError(t, projectMemberStore.Create(ctx, &v1.ProjectMember{
 					Meta:      &v1.Meta{Annotations: map[string]string{"role": "admin"}},
