@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
+	"uuid"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/jmoiron/sqlx"
@@ -13,6 +15,7 @@ import (
 	apiv1 "github.com/metal-stack/tenant-api/go/tenant/api/v1"
 	"github.com/metal-stack/tenant-api/go/tenant/api/v1/apiv1connect"
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
+	"github.com/metal-stack/tenant-apiserver/test/pg"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	testpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -26,7 +29,7 @@ func startTenantApiserverWithPostgres(t testing.TB, log *slog.Logger) (client.Cl
 		testpostgres.WithPassword("password"),
 		testpostgres.BasicWaitStrategies(),
 		testcontainers.WithTmpfs(map[string]string{"/var/lib/postgresql": "rw"}),
-		testcontainers.WithName("postgres"),
+		testcontainers.WithName(containerName(t)),
 	)
 	require.NoError(t, err)
 
@@ -44,26 +47,23 @@ func startTenantApiserverWithPostgres(t testing.TB, log *slog.Logger) (client.Cl
 }
 
 func startTenantApiserverWithDB(t testing.TB, log *slog.Logger, dbcloser func(), db *sqlx.DB) (client.Client, func()) {
-
 	log = log.WithGroup("tenant-apiserver")
-	ps := postgres.New(log, db, &apiv1.Project{})
-	pms := postgres.New(log, db, &apiv1.ProjectMember{})
-	ts := postgres.New(log, db, &apiv1.Tenant{})
-	tms := postgres.New(log, db, &apiv1.TenantMember{})
 
-	err := postgres.InitTables(log, db,
-		&apiv1.Project{},
-		&apiv1.ProjectMember{},
-		&apiv1.Tenant{},
-		&apiv1.TenantMember{},
-	)
+	err := postgres.InitTables(log, db, pg.AllEntities()...)
 	require.NoError(t, err)
 
-	projectService := NewProjectService(log, ps, pms, ts)
-	projectMemberService := NewProjectMemberService(log, ps, pms, ts)
-	tenantService := NewTenantService(db, log, ts, tms)
-	tenantMemberService := NewTenantMemberService(log, ts, tms)
-	versionService := NewVersionService()
+	var (
+		ps  = postgres.New(log, db, &apiv1.Project{})
+		pms = postgres.New(log, db, &apiv1.ProjectMember{})
+		ts  = postgres.New(log, db, &apiv1.Tenant{})
+		tms = postgres.New(log, db, &apiv1.TenantMember{})
+
+		projectService       = NewProjectService(log, ps, pms, ts)
+		projectMemberService = NewProjectMemberService(log, ps, pms, ts)
+		tenantService        = NewTenantService(db, log, ts, tms)
+		tenantMemberService  = NewTenantMemberService(log, ts, tms)
+		versionService       = NewVersionService()
+	)
 
 	mux := http.NewServeMux()
 	mux.Handle(apiv1connect.NewProjectServiceHandler(projectService))
@@ -90,6 +90,12 @@ func startTenantApiserverWithDB(t testing.TB, log *slog.Logger, dbcloser func(),
 	require.NoError(t, err)
 
 	return client, closer
+}
+
+func containerName(t testing.TB) string {
+	containerUUID := uuid.New().String()
+	suffix, _, _ := strings.Cut(containerUUID, "-")
+	return t.Name() + "-" + suffix
 }
 
 func IgnoreUnexported() cmp.Option {
