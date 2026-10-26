@@ -17,6 +17,7 @@ import (
 	v1 "github.com/metal-stack/tenant-api/go/tenant/api/v1"
 	"github.com/metal-stack/tenant-apiserver/pkg/api"
 	"github.com/metal-stack/tenant-apiserver/pkg/errorutil"
+	"github.com/metal-stack/tenant-apiserver/pkg/health"
 	"github.com/metal-stack/tenant-apiserver/test"
 	"github.com/metal-stack/tenant-apiserver/test/config"
 	"github.com/stretchr/testify/assert"
@@ -828,12 +829,16 @@ func startPostgres(log *slog.Logger, t testing.TB) (testcontainers.Container, *s
 	var (
 		ves = []api.Entity{
 			&v1.Project{},
+			&v1.ProjectMember{},
 			&v1.Tenant{},
+			&v1.TenantMember{},
 		}
 	)
 
 	db, err := NewPostgresDB(log, ip, port.Port(), config.DBUser, config.DBPassword, config.DBName, "disable", ves...)
 	require.NoError(t, err)
+
+	require.NoError(t, MigrateDB(log, db, health.NewHealthServer()))
 
 	return pgContainer, db
 }
