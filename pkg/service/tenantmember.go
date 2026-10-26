@@ -49,8 +49,11 @@ func (s *tenantMemberService) Create(ctx context.Context, req *v1.TenantMemberSe
 	}
 
 	err = s.tenantMemberStore.Create(ctx, tenantMember)
+	if err != nil {
+		return nil, err
+	}
 
-	return &v1.TenantMemberServiceCreateResponse{TenantMember: tenantMember}, err
+	return &v1.TenantMemberServiceCreateResponse{TenantMember: tenantMember}, nil
 }
 
 func (s *tenantMemberService) Update(ctx context.Context, req *v1.TenantMemberServiceUpdateRequest) (*v1.TenantMemberServiceUpdateResponse, error) {
@@ -72,8 +75,11 @@ func (s *tenantMemberService) Update(ctx context.Context, req *v1.TenantMemberSe
 	}
 
 	err = s.tenantMemberStore.Update(ctx, tenantMember)
+	if err != nil {
+		return nil, err
+	}
 
-	return &v1.TenantMemberServiceUpdateResponse{TenantMember: tenantMember}, err
+	return &v1.TenantMemberServiceUpdateResponse{TenantMember: tenantMember}, nil
 }
 
 func (s *tenantMemberService) Delete(ctx context.Context, req *v1.TenantMemberServiceDeleteRequest) (*v1.TenantMemberServiceDeleteResponse, error) {
@@ -82,8 +88,11 @@ func (s *tenantMemberService) Delete(ctx context.Context, req *v1.TenantMemberSe
 	}
 
 	err := s.tenantMemberStore.Delete(ctx, tenantMember.Meta.Id)
+	if err != nil {
+		return nil, err
+	}
 
-	return &v1.TenantMemberServiceDeleteResponse{TenantMember: tenantMember}, err
+	return &v1.TenantMemberServiceDeleteResponse{TenantMember: tenantMember}, nil
 }
 
 func (s *tenantMemberService) Get(ctx context.Context, req *v1.TenantMemberServiceGetRequest) (*v1.TenantMemberServiceGetResponse, error) {
@@ -92,7 +101,7 @@ func (s *tenantMemberService) Get(ctx context.Context, req *v1.TenantMemberServi
 		return nil, err
 	}
 
-	return &v1.TenantMemberServiceGetResponse{TenantMember: tenantMember}, err
+	return &v1.TenantMemberServiceGetResponse{TenantMember: tenantMember}, nil
 }
 
 func (s *tenantMemberService) List(ctx context.Context, req *v1.TenantMemberServiceListRequest) (*v1.TenantMemberServiceListResponse, error) {
