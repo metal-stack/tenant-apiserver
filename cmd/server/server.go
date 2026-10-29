@@ -31,8 +31,10 @@ type config struct {
 	HttpServerEndpoint     string
 	MetricsEndpoint        string
 	Log                    *slog.Logger
+	ProjectConfigDataStore api.Storage[*apiv1.ProjectConfig]
 	ProjectDataStore       api.Storage[*apiv1.Project]
 	ProjectMemberDataStore api.Storage[*apiv1.ProjectMember]
+	TenantConfigDataStore  api.Storage[*apiv1.TenantConfig]
 	TenantDataStore        api.Storage[*apiv1.Tenant]
 	TenantMemberDataStore  api.Storage[*apiv1.TenantMember]
 	DB                     *sqlx.DB
@@ -40,8 +42,10 @@ type config struct {
 type server struct {
 	c config
 
+	projectConfigDataStore api.Storage[*apiv1.ProjectConfig]
 	projectDataStore       api.Storage[*apiv1.Project]
 	projectMemberDataStore api.Storage[*apiv1.ProjectMember]
+	tenantConfigDataStore  api.Storage[*apiv1.TenantConfig]
 	tenantDataStore        api.Storage[*apiv1.Tenant]
 	tenantMemberDataStore  api.Storage[*apiv1.TenantMember]
 }
@@ -49,8 +53,10 @@ type server struct {
 func newServer(c config) *server {
 	return &server{
 		c:                      c,
+		projectConfigDataStore: c.ProjectConfigDataStore,
 		projectDataStore:       c.ProjectDataStore,
 		projectMemberDataStore: c.ProjectMemberDataStore,
+		tenantConfigDataStore:  c.TenantConfigDataStore,
 		tenantDataStore:        c.TenantDataStore,
 		tenantMemberDataStore:  c.TenantMemberDataStore,
 	}
@@ -106,8 +112,10 @@ func (s *server) Run() error {
 
 	loggingInterceptor := newLoggingInterceptor(s.c.Log)
 
+	projectConfigService := service.NewProjectConfigService(s.c.Log, s.c.ProjectConfigDataStore, s.c.ProjectDataStore)
 	projectService := service.NewProjectService(s.c.Log, s.c.ProjectDataStore, s.c.ProjectMemberDataStore, s.c.TenantDataStore)
 	projectMemberService := service.NewProjectMemberService(s.c.Log, s.c.ProjectDataStore, s.c.ProjectMemberDataStore, s.c.TenantDataStore)
+	tenantConfigService := service.NewTenantConfigService(s.c.Log, s.c.TenantConfigDataStore, s.c.TenantDataStore)
 	// FIXME db should not be required here
 	tenantService := service.NewTenantService(s.c.DB, s.c.Log, s.c.TenantDataStore, s.c.TenantMemberDataStore)
 	tenantMemberService := service.NewTenantMemberService(s.c.Log, s.c.TenantDataStore, s.c.TenantMemberDataStore)
@@ -117,15 +125,19 @@ func (s *server) Run() error {
 	interceptors := connect.WithInterceptors(loggingInterceptor, otelInterceptor)
 
 	mux := http.NewServeMux()
+	mux.Handle(apiv1connect.NewProjectConfigServiceHandler(projectConfigService, interceptors))
 	mux.Handle(apiv1connect.NewProjectServiceHandler(projectService, interceptors))
 	mux.Handle(apiv1connect.NewProjectMemberServiceHandler(projectMemberService, interceptors))
+	mux.Handle(apiv1connect.NewTenantConfigServiceHandler(tenantConfigService, interceptors))
 	mux.Handle(apiv1connect.NewTenantServiceHandler(tenantService, interceptors))
 	mux.Handle(apiv1connect.NewTenantMemberServiceHandler(tenantMemberService, interceptors))
 	mux.Handle(apiv1connect.NewVersionServiceHandler(versionService, interceptors))
 
 	allServiceNames := []string{
+		apiv1connect.ProjectConfigServiceName,
 		apiv1connect.ProjectServiceName,
 		apiv1connect.ProjectMemberServiceName,
+		apiv1connect.TenantConfigServiceName,
 		apiv1connect.TenantServiceName,
 		apiv1connect.TenantMemberServiceName,
 		apiv1connect.VersionServiceName,

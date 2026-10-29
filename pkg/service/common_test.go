@@ -53,21 +53,27 @@ func startTenantApiserverWithDB(t testing.TB, log *slog.Logger, dbcloser func(),
 	require.NoError(t, err)
 
 	var (
+		pcs = postgres.New(log, db, &apiv1.ProjectConfig{})
 		ps  = postgres.New(log, db, &apiv1.Project{})
 		pms = postgres.New(log, db, &apiv1.ProjectMember{})
+		tcs = postgres.New(log, db, &apiv1.TenantConfig{})
 		ts  = postgres.New(log, db, &apiv1.Tenant{})
 		tms = postgres.New(log, db, &apiv1.TenantMember{})
 
+		projectConfigService = NewProjectConfigService(log, pcs, ps)
 		projectService       = NewProjectService(log, ps, pms, ts)
 		projectMemberService = NewProjectMemberService(log, ps, pms, ts)
+		tenantConfigService  = NewTenantConfigService(log, tcs, ts)
 		tenantService        = NewTenantService(db, log, ts, tms)
 		tenantMemberService  = NewTenantMemberService(log, ts, tms)
 		versionService       = NewVersionService()
 	)
 
 	mux := http.NewServeMux()
+	mux.Handle(apiv1connect.NewProjectConfigServiceHandler(projectConfigService))
 	mux.Handle(apiv1connect.NewProjectServiceHandler(projectService))
 	mux.Handle(apiv1connect.NewProjectMemberServiceHandler(projectMemberService))
+	mux.Handle(apiv1connect.NewTenantConfigServiceHandler(tenantConfigService))
 	mux.Handle(apiv1connect.NewTenantServiceHandler(tenantService))
 	mux.Handle(apiv1connect.NewTenantMemberServiceHandler(tenantMemberService))
 	mux.Handle(apiv1connect.NewVersionServiceHandler(versionService))
