@@ -18,6 +18,7 @@ import (
 type tenantService struct {
 	log               *slog.Logger
 	tenantStore       api.Storage[*v1.Tenant]
+	tenantConfigStore api.Storage[*v1.TenantConfig]
 	tenantMemberStore api.Storage[*v1.TenantMember]
 	db                *sqlx.DB
 }
@@ -29,10 +30,11 @@ var (
 	tenants        = api.Entity(&v1.Tenant{})
 )
 
-func NewTenantService(db *sqlx.DB, l *slog.Logger, tds TenantDataStore, tmds TenantMemberDataStore) *tenantService {
+func NewTenantService(db *sqlx.DB, l *slog.Logger, tds TenantDataStore, tcds TenantConfigDataStore, tmds TenantMemberDataStore) *tenantService {
 	return &tenantService{
 		db:                db,
 		tenantStore:       NewStorageStatusWrapper(tds),
+		tenantConfigStore: NewStorageStatusWrapper(tcds),
 		tenantMemberStore: NewStorageStatusWrapper(tmds),
 		log:               l,
 	}
@@ -97,6 +99,26 @@ func (s *tenantService) Delete(ctx context.Context, req *v1.TenantServiceDeleteR
 
 	if len(ids) > 0 {
 		err = s.tenantMemberStore.DeleteAll(ctx, ids...)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	configFilter := map[string]any{
+		"tenantconfig ->> 'tenant_id'": tenant.Meta.Id,
+	}
+	configs, _, err := s.tenantConfigStore.Find(ctx, nil, configFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	var configIds []string
+	for _, c := range configs {
+		configIds = append(configIds, c.Meta.Id)
+	}
+
+	if len(configIds) > 0 {
+		err = s.tenantConfigStore.DeleteAll(ctx, configIds...)
 		if err != nil {
 			return nil, err
 		}

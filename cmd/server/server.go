@@ -113,11 +113,11 @@ func (s *server) Run() error {
 	loggingInterceptor := newLoggingInterceptor(s.c.Log)
 
 	projectConfigService := service.NewProjectConfigService(s.c.Log, s.c.ProjectConfigDataStore, s.c.ProjectDataStore)
-	projectService := service.NewProjectService(s.c.Log, s.c.ProjectDataStore, s.c.ProjectMemberDataStore, s.c.TenantDataStore)
+	projectService := service.NewProjectService(s.c.Log, s.c.ProjectDataStore, s.c.ProjectConfigDataStore, s.c.ProjectMemberDataStore, s.c.TenantDataStore)
 	projectMemberService := service.NewProjectMemberService(s.c.Log, s.c.ProjectDataStore, s.c.ProjectMemberDataStore, s.c.TenantDataStore)
 	tenantConfigService := service.NewTenantConfigService(s.c.Log, s.c.TenantConfigDataStore, s.c.TenantDataStore)
 	// FIXME db should not be required here
-	tenantService := service.NewTenantService(s.c.DB, s.c.Log, s.c.TenantDataStore, s.c.TenantMemberDataStore)
+	tenantService := service.NewTenantService(s.c.DB, s.c.Log, s.c.TenantDataStore, s.c.TenantConfigDataStore, s.c.TenantMemberDataStore)
 	tenantMemberService := service.NewTenantMemberService(s.c.Log, s.c.TenantDataStore, s.c.TenantMemberDataStore)
 	versionService := service.NewVersionService()
 

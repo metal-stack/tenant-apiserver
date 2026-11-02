@@ -106,7 +106,6 @@ func (s *projectConfigService) List(ctx context.Context, req *v1.ProjectConfigSe
 		mapFilter["projectconfig ->> 'project_id'"] = req.ProjectId
 	}
 	for key, value := range req.Annotations {
-		// select * from projectconfigs where projectconfig -> 'meta' -> 'annotations' ->>  'metal-stack.io/admitted' = 'true';
 		f := fmt.Sprintf("projectconfig -> 'meta' -> 'annotations' ->> '%s'", key)
 		mapFilter[f] = value
 	}

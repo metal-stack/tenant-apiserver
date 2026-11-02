@@ -106,6 +106,44 @@ func TestCreateGetUpdateDeleteTenantConfig(t *testing.T) {
 	assert.Nil(t, getresp)
 }
 
+func TestDeleteTenantDeletesTenantConfigs(t *testing.T) {
+	ctx := t.Context()
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	client, closer := startTenantApiserverWithPostgres(t, log)
+	defer closer()
+
+	t1, err := client.Apiv1().Tenant().Create(ctx, &v1.TenantServiceCreateRequest{Tenant: &v1.Tenant{
+		Meta: &v1.Meta{Id: "t1"},
+		Name: "t1",
+	}})
+	require.NoError(t, err)
+
+	tc1, err := client.Apiv1().TenantConfig().Create(ctx, &v1.TenantConfigServiceCreateRequest{TenantConfig: &v1.TenantConfig{
+		Meta:     &v1.Meta{Id: "tc1"},
+		Name:     "k8s-accounting",
+		TenantId: t1.GetTenant().Meta.Id,
+	}})
+	require.NoError(t, err)
+	tc2, err := client.Apiv1().TenantConfig().Create(ctx, &v1.TenantConfigServiceCreateRequest{TenantConfig: &v1.TenantConfig{
+		Meta:     &v1.Meta{Id: "tc2"},
+		Name:     "iam-client-secret",
+		TenantId: t1.GetTenant().Meta.Id,
+	}})
+	require.NoError(t, err)
+
+	deleteResp, err := client.Apiv1().Tenant().Delete(ctx, &v1.TenantServiceDeleteRequest{Id: t1.GetTenant().Meta.Id})
+	require.NoError(t, err)
+	assert.Equal(t, "t1", deleteResp.Tenant.GetMeta().GetId())
+
+	// all tenant configs of the deleted tenant must be gone as well
+	for _, id := range []string{tc1.TenantConfig.GetMeta().GetId(), tc2.TenantConfig.GetMeta().GetId()} {
+		getresp, err := client.Apiv1().TenantConfig().Get(ctx, &v1.TenantConfigServiceGetRequest{Id: id})
+		require.Error(t, err)
+		require.True(t, errorutil.IsNotFound(err))
+		assert.Nil(t, getresp)
+	}
+}
+
 func TestFindTenantConfig(t *testing.T) {
 	ctx := t.Context()
 

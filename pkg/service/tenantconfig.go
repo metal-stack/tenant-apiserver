@@ -106,7 +106,6 @@ func (s *tenantConfigService) List(ctx context.Context, req *v1.TenantConfigServ
 		mapFilter["tenantconfig ->> 'tenant_id'"] = req.TenantId
 	}
 	for key, value := range req.Annotations {
-		// select * from tenantconfigs where tenantconfig -> 'meta' -> 'annotations' ->>  'metal-stack.io/admitted' = 'true';
 		f := fmt.Sprintf("tenantconfig -> 'meta' -> 'annotations' ->> '%s'", key)
 		mapFilter[f] = value
 	}

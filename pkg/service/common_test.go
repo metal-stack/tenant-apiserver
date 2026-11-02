@@ -61,10 +61,10 @@ func startTenantApiserverWithDB(t testing.TB, log *slog.Logger, dbcloser func(),
 		tms = postgres.New(log, db, &apiv1.TenantMember{})
 
 		projectConfigService = NewProjectConfigService(log, pcs, ps)
-		projectService       = NewProjectService(log, ps, pms, ts)
+		projectService       = NewProjectService(log, ps, pcs, pms, ts)
 		projectMemberService = NewProjectMemberService(log, ps, pms, ts)
 		tenantConfigService  = NewTenantConfigService(log, tcs, ts)
-		tenantService        = NewTenantService(db, log, ts, tms)
+		tenantService        = NewTenantService(db, log, ts, tcs, tms)
 		tenantMemberService  = NewTenantMemberService(log, ts, tms)
 		versionService       = NewVersionService()
 	)

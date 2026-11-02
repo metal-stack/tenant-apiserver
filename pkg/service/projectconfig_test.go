@@ -112,6 +112,50 @@ func TestCreateGetUpdateDeleteProjectConfig(t *testing.T) {
 	assert.Nil(t, getresp)
 }
 
+func TestDeleteProjectDeletesProjectConfigs(t *testing.T) {
+	ctx := t.Context()
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	client, closer := startTenantApiserverWithPostgres(t, log)
+	defer closer()
+
+	t1, err := client.Apiv1().Tenant().Create(ctx, &v1.TenantServiceCreateRequest{Tenant: &v1.Tenant{
+		Meta: &v1.Meta{Id: "t1"},
+		Name: "t1",
+	}})
+	require.NoError(t, err)
+	p1, err := client.Apiv1().Project().Create(ctx, &v1.ProjectServiceCreateRequest{Project: &v1.Project{
+		Meta:     &v1.Meta{Id: "p1"},
+		Name:     "p1",
+		TenantId: t1.GetTenant().Meta.Id,
+	}})
+	require.NoError(t, err)
+
+	pc1, err := client.Apiv1().ProjectConfig().Create(ctx, &v1.ProjectConfigServiceCreateRequest{ProjectConfig: &v1.ProjectConfig{
+		Meta:      &v1.Meta{Id: "pc1"},
+		Name:      "k8s-accounting",
+		ProjectId: p1.Project.Meta.Id,
+	}})
+	require.NoError(t, err)
+	pc2, err := client.Apiv1().ProjectConfig().Create(ctx, &v1.ProjectConfigServiceCreateRequest{ProjectConfig: &v1.ProjectConfig{
+		Meta:      &v1.Meta{Id: "pc2"},
+		Name:      "iam-client-secret",
+		ProjectId: p1.Project.Meta.Id,
+	}})
+	require.NoError(t, err)
+
+	deleteResp, err := client.Apiv1().Project().Delete(ctx, &v1.ProjectServiceDeleteRequest{Id: p1.Project.Meta.Id})
+	require.NoError(t, err)
+	assert.Equal(t, "p1", deleteResp.Project.GetMeta().GetId())
+
+	// all project configs of the deleted project must be gone as well
+	for _, id := range []string{pc1.ProjectConfig.GetMeta().GetId(), pc2.ProjectConfig.GetMeta().GetId()} {
+		getresp, err := client.Apiv1().ProjectConfig().Get(ctx, &v1.ProjectConfigServiceGetRequest{Id: id})
+		require.Error(t, err)
+		require.True(t, errorutil.IsNotFound(err))
+		assert.Nil(t, getresp)
+	}
+}
+
 func TestFindProjectConfig(t *testing.T) {
 	ctx := t.Context()
 
