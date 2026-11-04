@@ -9,8 +9,10 @@ import (
 )
 
 type (
+	ProjectConfigDataStore api.Storage[*v1.ProjectConfig]
 	ProjectDataStore       api.Storage[*v1.Project]
 	ProjectMemberDataStore api.Storage[*v1.ProjectMember]
+	TenantConfigDataStore  api.Storage[*v1.TenantConfig]
 	TenantDataStore        api.Storage[*v1.Tenant]
 	TenantMemberDataStore  api.Storage[*v1.TenantMember]
 )

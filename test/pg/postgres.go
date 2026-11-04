@@ -35,8 +35,10 @@ func StartPostgres(log *slog.Logger, t testing.TB) (testcontainers.Container, *s
 
 func AllEntities() []api.Entity {
 	return []api.Entity{
+		&apiv1.ProjectConfig{},
 		&apiv1.Project{},
 		&apiv1.ProjectMember{},
+		&apiv1.TenantConfig{},
 		&apiv1.Tenant{},
 		&apiv1.TenantMember{},
 	}

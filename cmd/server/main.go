@@ -95,8 +95,10 @@ func main() {
 					sslmode := cmd.String("sslmode")
 
 					ves := []api.Entity{
+						&apiv1.ProjectConfig{},
 						&apiv1.Project{},
 						&apiv1.ProjectMember{},
+						&apiv1.TenantConfig{},
 						&apiv1.Tenant{},
 						&apiv1.TenantMember{},
 					}
@@ -110,12 +112,16 @@ func main() {
 						return fmt.Errorf("failed to migrate database: %w", err)
 					}
 
+					pcs := postgres.New(c.Log, db, &apiv1.ProjectConfig{})
 					ps := postgres.New(c.Log, db, &apiv1.Project{})
 					pms := postgres.New(c.Log, db, &apiv1.ProjectMember{})
+					tcs := postgres.New(c.Log, db, &apiv1.TenantConfig{})
 					ts := postgres.New(c.Log, db, &apiv1.Tenant{})
 					tms := postgres.New(c.Log, db, &apiv1.TenantMember{})
+					c.ProjectConfigDataStore = pcs
 					c.ProjectDataStore = ps
 					c.ProjectMemberDataStore = pms
+					c.TenantConfigDataStore = tcs
 					c.TenantDataStore = ts
 					c.TenantMemberDataStore = tms
 					c.DB = db
@@ -130,13 +136,17 @@ func main() {
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					c := getConfig(cmd)
 
+					pcs := memory.NewMemory(c.Log, &apiv1.ProjectConfig{})
 					ps := memory.NewMemory(c.Log, &apiv1.Project{})
 					pms := memory.NewMemory(c.Log, &apiv1.ProjectMember{})
+					tcs := memory.NewMemory(c.Log, &apiv1.TenantConfig{})
 					ts := memory.NewMemory(c.Log, &apiv1.Tenant{})
 					tms := memory.NewMemory(c.Log, &apiv1.TenantMember{})
 
+					c.ProjectConfigDataStore = pcs
 					c.ProjectDataStore = ps
 					c.ProjectMemberDataStore = pms
+					c.TenantConfigDataStore = tcs
 					c.TenantDataStore = ts
 					c.TenantMemberDataStore = tms
 					s := newServer(c)

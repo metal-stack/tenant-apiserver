@@ -14,14 +14,16 @@ import (
 
 type projectService struct {
 	projectStore       api.Storage[*v1.Project]
+	projectConfigStore api.Storage[*v1.ProjectConfig]
 	projectMemberStore api.Storage[*v1.ProjectMember]
 	tenantStore        api.Storage[*v1.Tenant]
 	log                *slog.Logger
 }
 
-func NewProjectService(l *slog.Logger, pds ProjectDataStore, pmds ProjectMemberDataStore, tds TenantDataStore) *projectService {
+func NewProjectService(l *slog.Logger, pds ProjectDataStore, pcds ProjectConfigDataStore, pmds ProjectMemberDataStore, tds TenantDataStore) *projectService {
 	return &projectService{
 		projectStore:       NewStorageStatusWrapper(pds),
+		projectConfigStore: NewStorageStatusWrapper(pcds),
 		projectMemberStore: NewStorageStatusWrapper(pmds),
 		tenantStore:        NewStorageStatusWrapper(tds),
 		log:                l,
@@ -90,6 +92,26 @@ func (s *projectService) Delete(ctx context.Context, req *v1.ProjectServiceDelet
 
 	if len(ids) > 0 {
 		err = s.projectMemberStore.DeleteAll(ctx, ids...)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	configFilter := map[string]any{
+		"projectconfig ->> 'project_id'": project.Meta.Id,
+	}
+	configs, _, err := s.projectConfigStore.Find(ctx, nil, configFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	var configIds []string
+	for _, c := range configs {
+		configIds = append(configIds, c.Meta.Id)
+	}
+
+	if len(configIds) > 0 {
+		err = s.projectConfigStore.DeleteAll(ctx, configIds...)
 		if err != nil {
 			return nil, err
 		}
