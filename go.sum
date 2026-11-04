@@ -109,8 +109,8 @@ github.com/mattn/go-sqlite3 v1.14.22 h1:2gZY6PC6kBnID23Tichd1K+Z0oS6nE/XwU+Vz/5o
 github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 github.com/mdelapenya/tlscert v0.2.0 h1:7H81W6Z/4weDvZBNOfQte5GpIMo0lGYEeWbkGp5LJHI=
 github.com/mdelapenya/tlscert v0.2.0/go.mod h1:O4njj3ELLnJjGdkN7M/vIVCpZ+Cf0L6muqOG4tLSl8o=
-github.com/metal-stack/tenant-api v0.2.2-0.20261104101619-e17a311bf734 h1:P+2f0Z59WG4UR4OULQPMpwUHECqbINyECa3/OS9aR3g=
-github.com/metal-stack/tenant-api v0.2.2-0.20261104101619-e17a311bf734/go.mod h1:eBZvQzIcJqlQ914ineCNBcXlfQjfJ3YoIKNmuAIOL20=
+github.com/metal-stack/tenant-api v0.3.0 h1:VjEdPp2ZBeFOeMz0dZJPzBpF4w++vEypgFM3lNSncDU=
+github.com/metal-stack/tenant-api v0.3.0/go.mod h1:eBZvQzIcJqlQ914ineCNBcXlfQjfJ3YoIKNmuAIOL20=
 github.com/metal-stack/v v1.0.3 h1:Sh2oBlnxrCUD+mVpzfC8HiqL045YWkxs0gpTvkjppqs=
 github.com/metal-stack/v v1.0.3/go.mod h1:YTahEu7/ishwpYKnp/VaW/7nf8+PInogkfGwLcGPdXg=
 github.com/minio/minlz v1.2.0 h1:6IOBuiHg04QxvbFfgFLT/9sMaO/UhL7S+ApW1mK8q5A=
