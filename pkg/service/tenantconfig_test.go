@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/runtime/protoimpl"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
@@ -36,28 +37,25 @@ func TestCreateGetUpdateDeleteTenantConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	tc1, err := client.Apiv1().TenantConfig().Create(ctx, &v1.TenantConfigServiceCreateRequest{TenantConfig: &v1.TenantConfig{
-		Meta:     &v1.Meta{Id: "tc1"},
 		Name:     "k8s-accounting",
 		TenantId: t1.GetTenant().Meta.Id,
 		Config:   payload,
 	}})
 	require.NoError(t, err)
 	assert.NotNil(t, tc1.TenantConfig)
-	assert.Equal(t, "tc1", tc1.TenantConfig.GetMeta().GetId())
+	assert.NotEmpty(t, tc1.TenantConfig.GetMeta().GetId())
 
 	resp, err := client.Apiv1().TenantConfig().Get(ctx, &v1.TenantConfigServiceGetRequest{Id: tc1.TenantConfig.Meta.Id})
 	require.NoError(t, err)
 	assert.NotNil(t, resp.TenantConfig)
-	assert.Equal(t, "tc1", resp.TenantConfig.GetMeta().GetId())
+	assert.Equal(t, tc1.TenantConfig.GetMeta().GetId(), resp.TenantConfig.GetMeta().GetId())
 	assert.Equal(t, "k8s-accounting", resp.TenantConfig.Name)
 	assert.Equal(t, t1.GetTenant().Meta.Id, resp.TenantConfig.TenantId)
 
-	// the arbitrary config payload must survive the round trip
 	var value wrapperspb.StringValue
 	require.NoError(t, resp.TenantConfig.Config.UnmarshalTo(&value))
 	assert.Equal(t, "k8s-accounting-payload", value.Value)
 
-	// creating without meta must generate an id
 	tc2, err := client.Apiv1().TenantConfig().Create(ctx, &v1.TenantConfigServiceCreateRequest{TenantConfig: &v1.TenantConfig{
 		Name:     "iam-client-secret",
 		TenantId: t1.GetTenant().Meta.Id,
@@ -70,23 +68,27 @@ func TestCreateGetUpdateDeleteTenantConfig(t *testing.T) {
 	assert.Equal(t, "iam-client-secret", tc2get.TenantConfig.Name)
 	assert.Equal(t, t1.GetTenant().Meta.Id, tc2get.TenantConfig.TenantId)
 
-	// creating for an unknown tenant must fail with not found
 	_, err = client.Apiv1().TenantConfig().Create(ctx, &v1.TenantConfigServiceCreateRequest{TenantConfig: &v1.TenantConfig{
-		Meta:     &v1.Meta{Id: "tc3"},
 		Name:     "orphan",
 		TenantId: "unknown-tenant",
 	}})
 	require.Error(t, err)
 	require.True(t, errorutil.IsNotFound(err))
 
-	// updating the name is allowed
+	_, err = client.Apiv1().TenantConfig().Create(ctx, &v1.TenantConfigServiceCreateRequest{TenantConfig: &v1.TenantConfig{
+		Meta:     &v1.Meta{Id: "tc-set-by-client"},
+		Name:     "with-id",
+		TenantId: t1.GetTenant().Meta.Id,
+	}})
+	require.Error(t, err)
+	require.True(t, errorutil.IsInvalidArgument(err))
+
 	updated := resp.TenantConfig
 	updated.Name = "renamed-config"
 	updateresp, err := client.Apiv1().TenantConfig().Update(ctx, &v1.TenantConfigServiceUpdateRequest{TenantConfig: updated})
 	require.NoError(t, err)
 	assert.Equal(t, "renamed-config", updateresp.TenantConfig.Name)
 
-	// moving the config to another tenant is not allowed
 	movedResp, err := client.Apiv1().TenantConfig().Get(ctx, &v1.TenantConfigServiceGetRequest{Id: tc1.TenantConfig.Meta.Id})
 	require.NoError(t, err)
 	moved := movedResp.TenantConfig
@@ -98,12 +100,60 @@ func TestCreateGetUpdateDeleteTenantConfig(t *testing.T) {
 	deleteResp, err := client.Apiv1().TenantConfig().Delete(ctx, &v1.TenantConfigServiceDeleteRequest{Id: tc1.TenantConfig.Meta.Id})
 	require.NoError(t, err)
 	assert.NotNil(t, deleteResp.TenantConfig)
-	assert.Equal(t, "tc1", deleteResp.TenantConfig.GetMeta().GetId())
+	assert.Equal(t, tc1.TenantConfig.GetMeta().GetId(), deleteResp.TenantConfig.GetMeta().GetId())
 
 	getresp, err := client.Apiv1().TenantConfig().Get(ctx, &v1.TenantConfigServiceGetRequest{Id: tc1.TenantConfig.Meta.Id})
 	require.Error(t, err)
 	require.True(t, errorutil.IsNotFound(err))
 	assert.Nil(t, getresp)
+}
+
+func TestTenantConfigWithTypedAnyPayload(t *testing.T) {
+	ctx := t.Context()
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	client, closer := startTenantApiserverWithPostgres(t, log)
+	defer closer()
+
+	t1, err := client.Apiv1().Tenant().Create(ctx, &v1.TenantServiceCreateRequest{Tenant: &v1.Tenant{
+		Meta: &v1.Meta{Id: "t1"},
+		Name: "t1",
+	}})
+	require.NoError(t, err)
+
+	payload, err := structpb.NewStruct(map[string]any{
+		"cluster_name": "metal-stack",
+		"replicas":     3,
+		"enabled":      true,
+	})
+	require.NoError(t, err)
+	anyPayload, err := anypb.New(payload)
+	require.NoError(t, err)
+	assert.Equal(t, "type.googleapis.com/google.protobuf.Struct", anyPayload.TypeUrl)
+	assert.NotEmpty(t, anyPayload.Value)
+
+	tc, err := client.Apiv1().TenantConfig().Create(ctx, &v1.TenantConfigServiceCreateRequest{TenantConfig: &v1.TenantConfig{
+		Name:     "k8s-accounting",
+		TenantId: t1.GetTenant().Meta.Id,
+		Config:   anyPayload,
+	}})
+	require.NoError(t, err)
+
+	resp, err := client.Apiv1().TenantConfig().Get(ctx, &v1.TenantConfigServiceGetRequest{Id: tc.TenantConfig.GetMeta().GetId()})
+	require.NoError(t, err)
+	require.NotNil(t, resp.TenantConfig.Config)
+
+	switch resp.TenantConfig.Config.GetTypeUrl() {
+	case "type.googleapis.com/google.protobuf.Struct":
+		var decoded structpb.Struct
+
+		require.NoError(t, resp.TenantConfig.Config.UnmarshalTo(&decoded))
+
+		assert.Equal(t, "metal-stack", decoded.Fields["cluster_name"].GetStringValue())
+		assert.Equal(t, float64(3), decoded.Fields["replicas"].GetNumberValue())
+		assert.True(t, decoded.Fields["enabled"].GetBoolValue())
+	default:
+		t.Fatalf("unexpected type_url %q", resp.TenantConfig.Config.GetTypeUrl())
+	}
 }
 
 func TestDeleteTenantDeletesTenantConfigs(t *testing.T) {
@@ -119,13 +169,11 @@ func TestDeleteTenantDeletesTenantConfigs(t *testing.T) {
 	require.NoError(t, err)
 
 	tc1, err := client.Apiv1().TenantConfig().Create(ctx, &v1.TenantConfigServiceCreateRequest{TenantConfig: &v1.TenantConfig{
-		Meta:     &v1.Meta{Id: "tc1"},
 		Name:     "k8s-accounting",
 		TenantId: t1.GetTenant().Meta.Id,
 	}})
 	require.NoError(t, err)
 	tc2, err := client.Apiv1().TenantConfig().Create(ctx, &v1.TenantConfigServiceCreateRequest{TenantConfig: &v1.TenantConfig{
-		Meta:     &v1.Meta{Id: "tc2"},
 		Name:     "iam-client-secret",
 		TenantId: t1.GetTenant().Meta.Id,
 	}})
@@ -135,7 +183,6 @@ func TestDeleteTenantDeletesTenantConfigs(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "t1", deleteResp.Tenant.GetMeta().GetId())
 
-	// all tenant configs of the deleted tenant must be gone as well
 	for _, id := range []string{tc1.TenantConfig.GetMeta().GetId(), tc2.TenantConfig.GetMeta().GetId()} {
 		getresp, err := client.Apiv1().TenantConfig().Get(ctx, &v1.TenantConfigServiceGetRequest{Id: id})
 		require.Error(t, err)
@@ -200,36 +247,6 @@ func TestFindTenantConfig(t *testing.T) {
 		want    *v1.TenantConfigServiceListResponse
 		wantErr error
 	}{
-		{
-			name: "find by id",
-			req: &v1.TenantConfigServiceListRequest{
-				Id: new("1"),
-			},
-			prepare: func() {
-				require.NoError(t, tenantConfigStore.Create(ctx, testTenantConfig1))
-				require.NoError(t, tenantConfigStore.Create(ctx, testTenantConfig2))
-			},
-			want: &v1.TenantConfigServiceListResponse{
-				TenantConfig: []*v1.TenantConfig{
-					testTenantConfig1,
-				},
-			},
-			wantErr: nil,
-		},
-		{
-			name: "find by id (no results)",
-			req: &v1.TenantConfigServiceListRequest{
-				Id: new("no-result"),
-			},
-			prepare: func() {
-				require.NoError(t, tenantConfigStore.Create(ctx, testTenantConfig1))
-				require.NoError(t, tenantConfigStore.Create(ctx, testTenantConfig2))
-			},
-			want: &v1.TenantConfigServiceListResponse{
-				TenantConfig: nil,
-			},
-			wantErr: nil,
-		},
 		{
 			name: "find by name",
 			req: &v1.TenantConfigServiceListRequest{

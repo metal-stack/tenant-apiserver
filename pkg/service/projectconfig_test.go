@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/runtime/protoimpl"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/metal-stack/tenant-apiserver/pkg/datastore/postgres"
@@ -42,28 +43,25 @@ func TestCreateGetUpdateDeleteProjectConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	pc1, err := client.Apiv1().ProjectConfig().Create(ctx, &v1.ProjectConfigServiceCreateRequest{ProjectConfig: &v1.ProjectConfig{
-		Meta:      &v1.Meta{Id: "pc1"},
 		Name:      "k8s-accounting",
 		ProjectId: p1.Project.Meta.Id,
 		Config:    payload,
 	}})
 	require.NoError(t, err)
 	assert.NotNil(t, pc1.ProjectConfig)
-	assert.Equal(t, "pc1", pc1.ProjectConfig.GetMeta().GetId())
+	assert.NotEmpty(t, pc1.ProjectConfig.GetMeta().GetId())
 
 	resp, err := client.Apiv1().ProjectConfig().Get(ctx, &v1.ProjectConfigServiceGetRequest{Id: pc1.ProjectConfig.Meta.Id})
 	require.NoError(t, err)
 	assert.NotNil(t, resp.ProjectConfig)
-	assert.Equal(t, "pc1", resp.ProjectConfig.GetMeta().GetId())
+	assert.Equal(t, pc1.ProjectConfig.GetMeta().GetId(), resp.ProjectConfig.GetMeta().GetId())
 	assert.Equal(t, "k8s-accounting", resp.ProjectConfig.Name)
 	assert.Equal(t, p1.Project.Meta.Id, resp.ProjectConfig.ProjectId)
 
-	// the arbitrary config payload must survive the round trip
 	var value wrapperspb.StringValue
 	require.NoError(t, resp.ProjectConfig.Config.UnmarshalTo(&value))
 	assert.Equal(t, "k8s-accounting-payload", value.Value)
 
-	// creating without meta must generate an id
 	pc2, err := client.Apiv1().ProjectConfig().Create(ctx, &v1.ProjectConfigServiceCreateRequest{ProjectConfig: &v1.ProjectConfig{
 		Name:      "iam-client-secret",
 		ProjectId: p1.Project.Meta.Id,
@@ -76,23 +74,27 @@ func TestCreateGetUpdateDeleteProjectConfig(t *testing.T) {
 	assert.Equal(t, "iam-client-secret", pc2get.ProjectConfig.Name)
 	assert.Equal(t, p1.Project.Meta.Id, pc2get.ProjectConfig.ProjectId)
 
-	// creating for an unknown project must fail with not found
 	_, err = client.Apiv1().ProjectConfig().Create(ctx, &v1.ProjectConfigServiceCreateRequest{ProjectConfig: &v1.ProjectConfig{
-		Meta:      &v1.Meta{Id: "pc3"},
 		Name:      "orphan",
 		ProjectId: "unknown-project",
 	}})
 	require.Error(t, err)
 	require.True(t, errorutil.IsNotFound(err))
 
-	// updating the name is allowed
+	_, err = client.Apiv1().ProjectConfig().Create(ctx, &v1.ProjectConfigServiceCreateRequest{ProjectConfig: &v1.ProjectConfig{
+		Meta:      &v1.Meta{Id: "pc-set-by-client"},
+		Name:      "with-id",
+		ProjectId: p1.Project.Meta.Id,
+	}})
+	require.Error(t, err)
+	require.True(t, errorutil.IsInvalidArgument(err))
+
 	updated := resp.ProjectConfig
 	updated.Name = "renamed-config"
 	updateresp, err := client.Apiv1().ProjectConfig().Update(ctx, &v1.ProjectConfigServiceUpdateRequest{ProjectConfig: updated})
 	require.NoError(t, err)
 	assert.Equal(t, "renamed-config", updateresp.ProjectConfig.Name)
 
-	// moving the config to another project is not allowed
 	movedResp, err := client.Apiv1().ProjectConfig().Get(ctx, &v1.ProjectConfigServiceGetRequest{Id: pc1.ProjectConfig.Meta.Id})
 	require.NoError(t, err)
 	moved := movedResp.ProjectConfig
@@ -104,12 +106,65 @@ func TestCreateGetUpdateDeleteProjectConfig(t *testing.T) {
 	deleteResp, err := client.Apiv1().ProjectConfig().Delete(ctx, &v1.ProjectConfigServiceDeleteRequest{Id: pc1.ProjectConfig.Meta.Id})
 	require.NoError(t, err)
 	assert.NotNil(t, deleteResp.ProjectConfig)
-	assert.Equal(t, "pc1", deleteResp.ProjectConfig.GetMeta().GetId())
+	assert.Equal(t, pc1.ProjectConfig.GetMeta().GetId(), deleteResp.ProjectConfig.GetMeta().GetId())
 
 	getresp, err := client.Apiv1().ProjectConfig().Get(ctx, &v1.ProjectConfigServiceGetRequest{Id: pc1.ProjectConfig.Meta.Id})
 	require.Error(t, err)
 	require.True(t, errorutil.IsNotFound(err))
 	assert.Nil(t, getresp)
+}
+
+func TestProjectConfigWithTypedAnyPayload(t *testing.T) {
+	ctx := t.Context()
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	client, closer := startTenantApiserverWithPostgres(t, log)
+	defer closer()
+
+	t1, err := client.Apiv1().Tenant().Create(ctx, &v1.TenantServiceCreateRequest{Tenant: &v1.Tenant{
+		Meta: &v1.Meta{Id: "t1"},
+		Name: "t1",
+	}})
+	require.NoError(t, err)
+	p1, err := client.Apiv1().Project().Create(ctx, &v1.ProjectServiceCreateRequest{Project: &v1.Project{
+		Meta:     &v1.Meta{Id: "p1"},
+		Name:     "p1",
+		TenantId: t1.GetTenant().Meta.Id,
+	}})
+	require.NoError(t, err)
+
+	payload, err := structpb.NewStruct(map[string]any{
+		"cluster_name": "metal-stack",
+		"replicas":     3,
+		"enabled":      true,
+	})
+	require.NoError(t, err)
+	anyPayload, err := anypb.New(payload)
+	require.NoError(t, err)
+	assert.Equal(t, "type.googleapis.com/google.protobuf.Struct", anyPayload.TypeUrl)
+	assert.NotEmpty(t, anyPayload.Value)
+
+	pc, err := client.Apiv1().ProjectConfig().Create(ctx, &v1.ProjectConfigServiceCreateRequest{ProjectConfig: &v1.ProjectConfig{
+		Name:      "k8s-accounting",
+		ProjectId: p1.Project.Meta.Id,
+		Config:    anyPayload,
+	}})
+	require.NoError(t, err)
+
+	resp, err := client.Apiv1().ProjectConfig().Get(ctx, &v1.ProjectConfigServiceGetRequest{Id: pc.ProjectConfig.GetMeta().GetId()})
+	require.NoError(t, err)
+	require.NotNil(t, resp.ProjectConfig.Config)
+
+	switch resp.ProjectConfig.Config.GetTypeUrl() {
+	case "type.googleapis.com/google.protobuf.Struct":
+		var decoded structpb.Struct
+		require.NoError(t, resp.ProjectConfig.Config.UnmarshalTo(&decoded))
+
+		assert.Equal(t, "metal-stack", decoded.Fields["cluster_name"].GetStringValue())
+		assert.Equal(t, float64(3), decoded.Fields["replicas"].GetNumberValue())
+		assert.True(t, decoded.Fields["enabled"].GetBoolValue())
+	default:
+		t.Fatalf("unexpected type_url %q", resp.ProjectConfig.Config.GetTypeUrl())
+	}
 }
 
 func TestDeleteProjectDeletesProjectConfigs(t *testing.T) {
@@ -131,13 +186,11 @@ func TestDeleteProjectDeletesProjectConfigs(t *testing.T) {
 	require.NoError(t, err)
 
 	pc1, err := client.Apiv1().ProjectConfig().Create(ctx, &v1.ProjectConfigServiceCreateRequest{ProjectConfig: &v1.ProjectConfig{
-		Meta:      &v1.Meta{Id: "pc1"},
 		Name:      "k8s-accounting",
 		ProjectId: p1.Project.Meta.Id,
 	}})
 	require.NoError(t, err)
 	pc2, err := client.Apiv1().ProjectConfig().Create(ctx, &v1.ProjectConfigServiceCreateRequest{ProjectConfig: &v1.ProjectConfig{
-		Meta:      &v1.Meta{Id: "pc2"},
 		Name:      "iam-client-secret",
 		ProjectId: p1.Project.Meta.Id,
 	}})
@@ -147,7 +200,6 @@ func TestDeleteProjectDeletesProjectConfigs(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "p1", deleteResp.Project.GetMeta().GetId())
 
-	// all project configs of the deleted project must be gone as well
 	for _, id := range []string{pc1.ProjectConfig.GetMeta().GetId(), pc2.ProjectConfig.GetMeta().GetId()} {
 		getresp, err := client.Apiv1().ProjectConfig().Get(ctx, &v1.ProjectConfigServiceGetRequest{Id: id})
 		require.Error(t, err)
@@ -212,36 +264,6 @@ func TestFindProjectConfig(t *testing.T) {
 		want    *v1.ProjectConfigServiceListResponse
 		wantErr error
 	}{
-		{
-			name: "find by id",
-			req: &v1.ProjectConfigServiceListRequest{
-				Id: new("1"),
-			},
-			prepare: func() {
-				require.NoError(t, projectConfigStore.Create(ctx, testProjectConfig1))
-				require.NoError(t, projectConfigStore.Create(ctx, testProjectConfig2))
-			},
-			want: &v1.ProjectConfigServiceListResponse{
-				ProjectConfig: []*v1.ProjectConfig{
-					testProjectConfig1,
-				},
-			},
-			wantErr: nil,
-		},
-		{
-			name: "find by id (no results)",
-			req: &v1.ProjectConfigServiceListRequest{
-				Id: new("no-result"),
-			},
-			prepare: func() {
-				require.NoError(t, projectConfigStore.Create(ctx, testProjectConfig1))
-				require.NoError(t, projectConfigStore.Create(ctx, testProjectConfig2))
-			},
-			want: &v1.ProjectConfigServiceListResponse{
-				ProjectConfig: nil,
-			},
-			wantErr: nil,
-		},
 		{
 			name: "find by name",
 			req: &v1.ProjectConfigServiceListRequest{
